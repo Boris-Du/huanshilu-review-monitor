@@ -1,0 +1,42 @@
+name: Update Steam review dashboard
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: pip install requests
+
+      - name: Fetch reviews and build dashboard
+        run: |
+          python steam_watch.py init --db steam_watch.db
+          if [ -f data/reviews_4030150.jsonl ]; then
+            python steam_watch.py seed data/reviews_4030150.jsonl --appid 4030150 --db steam_watch.db
+          fi
+          python steam_watch.py fetch --full --db steam_watch.db
+          python steam_watch.py report --db steam_watch.db --out docs --days 30 --excerpts 8
+          python steam_watch.py export data/reviews_4030150.jsonl --appid 4030150 --db steam_watch.db
+          python -c "import json;rows=[json.loads(l) for l in open('data/reviews_4030150.jsonl',encoding='utf-8')];json.dump(rows,open('docs/reviews_4030150.json','w',encoding='utf-8'),ensure_ascii=False)"
+          cp docs/dashboard_4030150.html docs/full.html
+
+      - name: Commit if changed
+        run: |
+          git config user.name "steam-watch bot"
+          git config user.email "actions@github.com"
+          git add -A data docs
+          git diff --quiet --cached || git commit -m "chore: update dashboard"
+          git push
