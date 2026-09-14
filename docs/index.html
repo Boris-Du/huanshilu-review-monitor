@@ -52,6 +52,8 @@ h1{font-size:24px;margin:0 0 5px;letter-spacing:-.01em}
   color:var(--ink2);cursor:pointer}
 .seg button[aria-pressed=true]{background:var(--ink);color:var(--plane);font-weight:600}
 .count{font-size:12.5px;color:var(--mut);margin:4px 0 18px}
+.count b{color:var(--ink)}
+#custom-range{font-size:12.5px;color:var(--mut)}
 
 .day{margin-bottom:26px}
 .dayhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;
@@ -110,6 +112,17 @@ mark{background:rgba(192,57,47,.18);color:inherit;padding:0 2px;border-radius:2p
     <button id="m-all" aria-pressed="true">負評＋故障回報</button>
     <button id="m-neg" aria-pressed="false">只看負評</button>
   </div>
+  <select id="f-range">
+    <option value="1">今天</option>
+    <option value="3">最近 3 天</option>
+    <option value="7" selected>最近 7 天</option>
+    <option value="30">最近 30 天</option>
+    <option value="0">全部</option>
+    <option value="custom">自訂範圍…</option>
+  </select>
+  <span id="custom-range" hidden>
+    <input type="date" id="f-from"> ～ <input type="date" id="f-to">
+  </span>
   <select id="f-lang"><option value="">全部語言</option></select>
   <select id="f-cat"><option value="">全部故障類型</option></select>
   <input type="search" id="f-q" placeholder="搜尋內文…">
@@ -148,7 +161,7 @@ const CATS = [
 const LANGL = {tchinese:"繁中",schinese:"簡中",english:"英文",japanese:"日文",koreana:"韓文",
   thai:"泰文",russian:"俄文",spanish:"西文",german:"德文",french:"法文",portuguese:"葡文"};
 const $ = s => document.querySelector(s);
-let state = {mode:"all", lang:"", cat:"", q:""};
+let state = {mode:"all", lang:"", cat:"", q:"", range:"7", from:"", to:""};
 
 function cats(t){
   const s = (t||"").toLowerCase();
@@ -201,7 +214,22 @@ function render(){
   if($("#f-cat").options.length === 1)
     CATS.filter(c=>c[1]).map(c=>c[0]).forEach(c => $("#f-cat").add(new Option(c, c)));
 
+  // 日期範圍
+  let lo = "", hi = "";
+  if(state.range === "custom"){ lo = state.from; hi = state.to; }
+  else if(state.range !== "0"){
+    const n = +state.range;
+    const latest = ITEMS.reduce((m,i) => i.day > m ? i.day : m, "");
+    if(latest){
+      const d = new Date(latest + "T00:00:00+08:00");
+      d.setDate(d.getDate() - (n - 1));
+      lo = d.toISOString().slice(0,10);
+      hi = latest;
+    }
+  }
+
   let rows = ITEMS.filter(i =>
+    (!lo || i.day >= lo) && (!hi || i.day <= hi) &&
     (state.mode === "all" || i.kind === "neg" || i.kind === "thr") &&
     (!state.lang || i.lang === state.lang) &&
     (!state.cat || i.cats.includes(state.cat)) &&
@@ -211,8 +239,12 @@ function render(){
   rows.forEach(i => (days[i.day] = days[i.day] || []).push(i));
   const order = Object.keys(days).sort().reverse();
 
-  $("#count").textContent = rows.length + " 筆　·　" + order.length + " 天　·　共 " +
-    (DATA.reviews||[]).length + " 筆評論、" + (DATA.threads||[]).length + " 個問題串已載入";
+  const rangeTxt = state.range === "0" ? "全部期間"
+    : state.range === "custom" ? ((state.from||"?") + " ～ " + (state.to||"?"))
+    : (lo && hi ? lo + " ～ " + hi : "");
+  $("#count").innerHTML = "<b>" + rows.length + "</b> 筆　·　" + order.length + " 天　·　" +
+    rangeTxt + "　·　資料庫共 " + (DATA.reviews||[]).length + " 筆評論、" +
+    (DATA.threads||[]).length + " 個問題串";
 
   if(!rows.length){ $("#list").innerHTML = '<div class="empty">沒有符合的內容</div>'; return; }
 
@@ -291,5 +323,30 @@ $("#m-neg").onclick = () => { state.mode="neg"; $("#m-neg").ariaPressed="true"; 
 $("#f-lang").onchange = e => { state.lang = e.target.value; render(); };
 $("#f-cat").onchange = e => { state.cat = e.target.value; render(); };
 $("#f-q").oninput = e => { state.q = e.target.value.trim(); render(); };
+$("#f-range").onchange = e => {
+  state.range = e.target.value;
+  $("#custom-range").hidden = state.range !== "custom";
+  if(state.range === "custom" && !state.from){
+    const days = [...new Set(ITEMS.map(i=>i.day))].sort();
+    $("#f-from").value = state.from = days[0] || "";
+    $("#f-to").value = state.to = days[days.length-1] || "";
+  }
+  render();
+};
+$("#f-from").onchange = e => { state.from = e.target.value; render(); };
+$("#f-to").onchange = e => { state.to = e.target.value; render(); };
 render();
+
+// 自動載入同目錄的 reviews_*.json（放在網站上時，開網址就是最新資料）
+(async () => {
+  for (const p of ["reviews_4030150.json", "data/reviews_4030150.json"]) {
+    try {
+      const res = await fetch(p, {cache: "no-store"});
+      if (!res.ok) continue;
+      load(await res.text(), p.split("/").pop());
+      const s = document.getElementById("setup"); if (s) s.open = false;
+      return;
+    } catch (e) { /* file:// 或檔案不存在就略過，改用內建資料 */ }
+  }
+})();
 </script>
