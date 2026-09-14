@@ -1,0 +1,669 @@
+<title>幻世錄重製版 評論監控</title>
+<style>
+.viz-root{color-scheme:light;--surface-1:#fcfcfb;--plane:#f9f9f7;--ink:#0b0b0b;
+ --ink2:#52514e;--mut:#898781;--grid:#e1e0d9;--line:#c3c2b7;
+ --pos:#2a78d6;--neg:#d03b3b;--ring:rgba(11,11,11,.10);
+ font:14px/1.55 system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;
+ color:var(--ink);background:var(--plane);padding:20px;max-width:1080px;margin:0 auto}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme=light])) .viz-root{
+ color-scheme:dark;--surface-1:#1a1a19;--plane:#0d0d0d;--ink:#fff;--ink2:#c3c2b7;
+ --grid:#2c2c2a;--line:#383835;--pos:#3987e5;--neg:#e66767;--ring:rgba(255,255,255,.10)}}
+:root[data-theme=dark] .viz-root{color-scheme:dark;--surface-1:#1a1a19;--plane:#0d0d0d;
+ --ink:#fff;--ink2:#c3c2b7;--grid:#2c2c2a;--line:#383835;--pos:#3987e5;--neg:#e66767;
+ --ring:rgba(255,255,255,.10)}
+.viz-root h1{font-size:20px;margin:0 0 2px}
+.viz-root h2{font-size:15px;margin:0 0 14px;color:var(--ink2);font-weight:600}
+.sub{color:var(--mut);font-size:12.5px;margin-bottom:18px}
+.card{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;
+ padding:18px 20px;margin-bottom:16px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.tile{background:var(--surface-1);border:1px solid var(--ring);border-radius:12px;padding:14px 16px}
+.tile .k{font-size:11.5px;color:var(--mut);letter-spacing:.02em}
+.tile .v{font-size:26px;font-weight:650;margin-top:2px}
+.tile .n{font-size:12px;color:var(--ink2)}
+.delta{font-size:12.5px;color:var(--ink2);margin-top:6px}
+svg{width:100%;height:auto;display:block}
+.gr{stroke:var(--grid);stroke-width:1}
+.ax{fill:var(--mut);font-size:10px}
+.b-pos{fill:var(--pos)}.b-neg{fill:var(--neg)}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--ink2);margin:10px 0 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+.lrow{display:grid;grid-template-columns:112px 1fr 118px;gap:10px;align-items:center;margin:7px 0}
+.llab{font-size:12.5px;color:var(--ink2);text-align:right}
+.lbar{display:flex;gap:2px;height:14px;background:transparent}
+.lbar span{display:block;border-radius:0 3px 3px 0}
+.s-pos{background:var(--pos)}.s-neg{background:var(--neg)}
+.lval{font-size:12.5px;font-variant-numeric:tabular-nums}
+.mut{color:var(--mut)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.filters select,.filters input{font:inherit;font-size:13px;padding:6px 9px;border-radius:8px;
+ border:1px solid var(--line);background:var(--surface-1);color:var(--ink)}
+.rev{border-top:1px solid var(--grid);padding:11px 0}
+.rev .meta{font-size:11.5px;color:var(--mut);display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.pill{font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid var(--ring)}
+.pill.up{color:var(--pos)}.pill.dn{color:var(--neg)}
+.tg{font-size:11px;color:var(--ink2);background:var(--plane);border:1px solid var(--ring);
+ padding:1px 6px;border-radius:6px}
+.rev p{margin:6px 0 0;white-space:pre-wrap;word-break:break-word}
+.threads{margin:0;padding-left:20px}.threads li{margin:5px 0}
+.threads a{color:var(--pos)}
+.foot{color:var(--mut);font-size:11.5px;margin-top:18px}
+table.tv{border-collapse:collapse;font-size:12.5px;width:100%;margin-top:8px}
+table.tv th,table.tv td{border-bottom:1px solid var(--grid);padding:5px 8px;text-align:right}
+table.tv th:first-child,table.tv td:first-child{text-align:left}
+details summary{cursor:pointer;color:var(--ink2);font-size:12.5px}
+.grp{border-top:1px solid var(--grid)}
+.grp:last-of-type{border-bottom:1px solid var(--grid)}
+.grp>summary{display:grid;grid-template-columns:150px 1fr 250px;gap:12px;align-items:center;
+ padding:9px 4px;color:var(--ink);font-size:13px;list-style:none}
+.grp>summary::-webkit-details-marker{display:none}
+.grp>summary:hover{background:var(--plane)}
+.grp>summary:focus-visible{outline:2px solid var(--pos);outline-offset:2px}
+.grp[open]>summary{font-weight:600}
+.gname::before{content:"▸ ";color:var(--mut)}
+.grp[open] .gname::before{content:"▾ "}
+.gbar{display:flex;gap:2px;height:12px}
+.gbar span{display:block;border-radius:0 3px 3px 0}
+.gnum{font-size:12.5px;color:var(--ink2);font-variant-numeric:tabular-nums;text-align:right}
+.gbody{padding:4px 0 16px 14px;border-left:2px solid var(--grid);margin-left:6px}
+.gsec{margin-top:10px}
+.gsech{font-size:11.5px;letter-spacing:.04em;color:var(--mut);margin-bottom:4px}
+.gbody .rev:first-of-type{border-top:none}
+@media (max-width:720px){.grp>summary{grid-template-columns:1fr;gap:4px}
+ .gnum{text-align:left}.lrow{grid-template-columns:80px 1fr 96px}}
+</style>
+<div class="viz-root" data-palette="#2a78d6,#d03b3b">
+<h1>幻世錄 重製版 · 玩家評論監控</h1>
+<div class="sub">產出時間 2026-09-10 18:02（台北）　資料來源：Steam appreviews API (appid 4030150) 與社群討論版　· 商店頁 18:05 顯示 110 篇 · 極度好評（好評／負評拆分依樣本比例估算）；評論全文樣本 118 筆（Steam 購買 116 筆，好評率 87.1%），由本機抓取至 17:35</div>
+
+<div class="tiles">
+  <div class="tile"><div class="k">總評論數</div><div class="v">110</div>
+    <div class="n">極度好評</div></div>
+  <div class="tile"><div class="k">好評率</div><div class="v">87.3%</div>
+    <div class="n">好評 96／負評 14</div></div>
+  <div class="tile"><div class="k">繁中好評率</div><div class="v">—</div><div class="n">尚無資料</div></div>
+  <div class="tile"><div class="k">本地樣本</div><div class="v">118</div>
+    <div class="n">已存入資料庫可全文檢索</div></div>
+</div>
+<div class="delta">與上次相比：評論 <b>+19</b>　負評 <b>+0</b></div>
+
+<section class="card">
+  <h2>每日評論數（好評 / 負評）</h2>
+  <svg viewBox="0 0 880 220" role="img" aria-label="每日評論數"><line class="gr" x1="28" x2="852" y1="192.0" y2="192.0"/><text class="ax" x="22" y="196.0" text-anchor="end">0</text><line class="gr" x1="28" x2="852" y1="110.0" y2="110.0"/><text class="ax" x="22" y="114.0" text-anchor="end">59</text><line class="gr" x1="28" x2="852" y1="28.0" y2="28.0"/><text class="ax" x="22" y="32.0" text-anchor="end">118</text><rect class="b-neg" x="429.0" y="169.8" width="22.0" height="22.2" rx="2"><title>2026-09-10　負評 16</title></rect><rect class="b-pos" x="429.0" y="26.0" width="22.0" height="141.8" rx="2"><title>2026-09-10　好評 102</title></rect><text class="ax" x="440.0" y="212" text-anchor="middle">09-10</text></svg>
+  <div class="legend"><span><i style="background:var(--pos)"></i>好評</span>
+    <span><i style="background:var(--neg)"></i>負評</span></div>
+</section>
+
+<section class="card">
+  <h2>各語言好評率</h2>
+  <div class="lrow"><div class="llab">簡中</div><div class="lbar"><span class="s-pos" style="width:83.84%" title="好評 83"></span><span class="s-neg" style="width:16.16%" title="負評 16"></span></div><div class="lval"><b>84%</b> <span class="mut">/ 99 筆</span></div></div><div class="lrow"><div class="llab">繁中</div><div class="lbar"><span class="s-pos" style="width:16.16%" title="好評 16"></span><span class="s-neg" style="width:0.00%" title="負評 0"></span></div><div class="lval"><b>100%</b> <span class="mut">/ 16 筆</span></div></div><div class="lrow"><div class="llab">英文</div><div class="lbar"><span class="s-pos" style="width:2.02%" title="好評 2"></span><span class="s-neg" style="width:0.00%" title="負評 0"></span></div><div class="lval"><b>100%</b> <span class="mut">/ 2 筆</span></div></div><div class="lrow"><div class="llab">韓文</div><div class="lbar"><span class="s-pos" style="width:1.01%" title="好評 1"></span><span class="s-neg" style="width:0.00%" title="負評 0"></span></div><div class="lval"><b>100%</b> <span class="mut">/ 1 筆</span></div></div>
+  <div class="legend"><span><i style="background:var(--pos)"></i>好評</span>
+    <span><i style="background:var(--neg)"></i>負評</span></div>
+  <details style="margin-top:12px"><summary>表格檢視</summary>
+   <table class="tv"><thead><tr><th>語言</th><th>評論</th><th>好評</th><th>負評</th><th>好評率</th></tr></thead>
+   <tbody><tr><td>簡中</td><td>99</td><td>83</td><td>16</td><td>83.8%</td></tr><tr><td>繁中</td><td>16</td><td>16</td><td>0</td><td>100.0%</td></tr><tr><td>英文</td><td>2</td><td>2</td><td>0</td><td>100.0%</td></tr><tr><td>韓文</td><td>1</td><td>1</td><td>0</td><td>100.0%</td></tr></tbody></table></details>
+</section>
+
+<section class="card">
+  <h2>議題彙整 — 同一議題的評論與討論串放在一起（近 3 天）</h2>
+  <div class="mut" style="font-size:12.5px;margin:-6px 0 12px">
+    點開任一議題即可看到該議題下的討論串與評論原文；一筆評論若同時談到多件事，會出現在多個議題裡。</div>
+  <details class="grp"><summary><span class="gname">情懷 / 補票</span><span class="gbar"><span class="s-pos" style="width:77.27%"></span><span class="s-neg" style="width:4.55%"></span></span><span class="gnum">評論 <b>36</b><span class="mut">（好 34／負 2）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.9 小時</span></div><p>纯纯的2杯游戏 情怀也不是这么消费的</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.5 小時</span><span>有用 3</span></div><p>首先我只为情怀补个票，但是这个价格我真的是。。。。你也敢？？？？？
+这画风这感觉完全和老版不是一回事，能玩但是很难受，游戏我不退就当补票了，但是差评我给</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.1 小時</span></div><p>不仅是补票，有一些创新还是不错的</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.6 小時</span></div><p>童年最喜欢的战旗之一，现在在玩经典版回忆一遍，打完再玩重制版，重置试玩了一会最高难度，敌对血是真的厚，老版的气刃斩都是秒人的，重制版气刃斩伤害只能打半血，其他队友的技能伤害也比气刃斩高，气刃斩伤害是不是下调了，还有挑战任务，玩起来比老版难度高多了</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.4 小時</span><span>有用 1</span></div><p>40岁老登为当年10多岁的自己补上一份回忆</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 0.3 小時</span></div><p>原版真的可以說是神作中的神作。
+當年的畫面、音樂、劇情和戰棋玩法，那種味道依然無可取代。
+重製版最重要的，不是畫面有多漂亮，而是能不能保留原版最迷人的靈魂。
+畢竟，《幻世錄》這三個字，對很多老玩家來說，本身就是一段回憶。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.6 小時</span></div><p>新的人物造型，安裝人物語音，過場動態人物表演，操作感的流暢與直覺性，劇情的補強和職業的更新，可以立刻調整的難度與快速的讀檔速度，種種細節都可以看得出製作組的用心，這才是真正好的重製。必須給一個讚!!!
+不得不在這裡臭一下暗恥，連重製版都做不好，只會巧立名目反覆收割粉絲的情懷，壓榨粉絲的荷包，說的遊戲規劃跟屁一樣，推出的更新內容跟便秘一般，拉坨屎都不乾脆，今天有搞了一個威力加強傳承版上市。
+對比本作的重製版，傳承根本如同兒戲。我話就放在這邊，要是暗榮你這次沒搞威加強傳承版之威力再加強版，我790元就花下去，下一代的信長野望，我也絕對買!</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.7 小時</span></div><p>补票上车</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 3.1 小時</span></div><p>國中的回憶!!</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span></div><p>纯粹为情怀买单，欠你一个20年前的licence fee。传统版音乐响起的时候，的确很有共鸣。这个游戏都不需要写攻略，网上找找以前的还能用，呵呵。制作组实在太不走心了，被骂也是理所应当，中文配音都是什么娘娘腔，想切换配音还要把语言也换了。。。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 6.0 小時</span></div><p>这个价格明显是没性价比的，但我愿意买给童年的自己，希望可以玩到幻世录2重置版</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.7 小時</span></div><p>没什么可说的，情怀补票。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.8 小時</span></div><p>童年回忆！！！愿意为童年买单！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.0 小時</span><span>有用 2</span></div><p>无脑入，说情怀就情怀吧，这就是青春啊。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.5 小時</span></div><p>这辈子玩过的第一款单机游戏就是幻世录，为了情怀肯定要买份重制版给个好评</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.9 小時</span></div><p>童年回忆，期待把2也重制了！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.2 小時</span></div><p>为情怀补票，诚意满满的重置，魂穿最美好的学生游戏时光，把自己的作品排队复刻吧，幻三，超时空英雄传说，绝代双骄。。。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.1 小時</span></div><p>童年的回忆啊，玩过原版的都是老登了吧（笑）。浅玩了一下还不错，能让我继续玩下去。希望吧幻世录2重置提上日程。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.2 小時</span></div><p>补票，童年最美好的回忆，虽然画面AI感很重，在现在各种精美画面的大制作面前有点拿不出手，但确实治好了电子ED，真的是好久没这么投入的玩游戏了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.1 小時</span></div><p>终于玩上了，毕竟小成本作品，制作组有没有10个人都不好说。不过价格也算接地气。怀旧党有福了，1998年的作品还能重制已经非常不容易了，童年白月光。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span><span>有用 1</span></div><p>看到这么多说贵的评价，也算是有点明白官方为什么不舍得花钱弄好点的美术了。隔壁今天一起开卖的东方红魔乡重制版卖97块可是好评如潮，人家也是主打怀旧童年的，才800多m大小没啥修改呢，而幻世录这边除了画面，其他修改明显更用心一点。怎么说，你的童年比人家玩东方的童年更轻贱一些吗？</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.2 小時</span><span>有用 3</span></div><p>很少首发入手游戏，算是补票了，希望能出幻世录2重制，也奢望能出3</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.2 小時</span></div><p>童年的经典回忆，抛开为情怀买单，也还是因为这个游戏值得买。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.9 小時</span><span>有用 3</span></div><p>还行。如果不算童年滤镜，其实体验是强过原版的。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.7 小時</span><span>有用 1</span></div><p>没玩过这游戏是没有情怀的，就算不是重置那也是经典或者神作。小时候没钱只能玩破解版现在有钱了必须为情怀冲一次，好怀念以前和同学兄弟们挤在电脑旁那激动的心情</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.9 小時</span><span>有用 2</span></div><p>虽然AI味道比较重，，但也算是童年的回忆。而且游戏进行了现代化翻新</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.1 小時</span><span>有用 1</span></div><p>为了情怀必须买单</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.1 小時</span><span>有用 1</span></div><p>情怀吧，情怀阿，情怀，哎~</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 3</span></div><p>事實證明，捱夜係值得嘅，9號晚都未有消息，等到12點後一睇，卒之上架啦 ^_^
+As my saying goes, where there is a night owl, there is a Purchasing Opportunity for "The Legend of Fancy Realm" Still no news on the evening of the 9th, but after waiting past midnight — it finally went live! ^_^
+
+作為侏羅紀時期就開始鍾意《幻世錄》嘅001號fans，梗係要支持一下奧汀啦！
+As the No. 001 fan who is a die-hard fan since the Jurassic period, of course I have to support Odin (Userjoy)!
+
+奧汀閣下，乜嘢《幻世錄》2代、《超時空英雄傳說》、《幻想紀元》、《異域狂想曲》、《墮落天使》……一齊上啦，你肯上我就肯買。
+Odin (Userjoy) Sama, please relaunch "The Legend of Fancy Realm 2", "Super series", "Fancy Centur", "‌The Fool Plate", "The Fallen Angel"... Come on, your promise, my purchasing without hesitation.
+
+順求官方 [h1]粵語配音及主題曲 [/h1]，感謝！
+Requesting official  [h1]Cantonese Dubbing and a Cantonese Theme Song[/h1], thank you very much!
+
+運行遊戲後，可以揀「經典版/繁中」、「經典版/簡中」或「重製版」。
+After launching the game, you can choose between "Classic Edition / Traditional Chinese", "Classic Edition / Simplified Chinese" or "Remake Edition".
+
+「經典版」版本號係1.06，「簡中」冇寰宇之星提示，仲係經典「磨擊力」:D。
+The version of "Classic Edition" is 1.06, with no "Unistar" prompt in the "Simplified Chinese" version. "Maggie Power", the classic mistranslation as usual :D.
+
+可以按 Alt+Enter 切換全屏或窗口，遊戲識自動保存全屏設定。
+You can toggle between fullscreen and windowed mode by pressing Alt+Enter, and the game will automatically save the fullscreen settings.
+
+再來睇重製版
+Let's take another look at the Remake.
+
+比試玩版改進咗好多，譬如唔會扣少少血就換成嘔血想死咁款。
+The demo version has been improved a lot, such as losing a little HP no longer triggers the vomiting blood like dying
+
+「音樂」吸取咗玩家意見，可以按個人喜好揀「經典版」或「重製版」。
+The "Music" feature incorporates player feedback, allowing users to choose between the "Classic Edition" or the "Remake Edition" based on personal preferences.
+
+一揀「經典版音樂」，感覺返晒來啦！
+Select the "Classic Edition Music" and feel like you're back in the old days!
+
+「回憶錄」菜單可以睇CG、對白同動畫。
+The "Memories" menu allows you to watch CG, Dialogue, and Movies.
+
+「創意工坊」超級強大，奧汀超級大方，抵讚！
+Workshop is super powerful, and Odin (Userjoy) is incredibly generous — well done!
+
+可以導出遊戲文本及配音劇本，
+You can export Localization texts and Voice recording lists.
+
+可以修改圖片、音樂、配音、文本、字體、裝備（含數值）
+You can modify Appearance, Music &amp; SFX, Voice, Localization, Fonts, and Equipment (including stats).
+
+欲知詳情如何，且聽下回分解……
+For more details, stay tuned for the next installment...</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 209</span></div><p>唉。。。怎么说呢，一言难尽。。我Steam虽然买了很多游戏，也玩的很多，我甚至干了游戏行业快10年，平时缺不怎么发表评论，这次破天荒想多说几句。。
+
+当年幻视录我玩时候，还是很多很多年前上小学，一开始用光盘，但是不会安装，就每次都是光盘启动，那个HSL的图标，但是由于是光盘启动的，所以每次都没法存档，那个年纪的我又不理解，于是每次只能玩前两关，玩一会吃饭就关了，再开又是前两关，就这么打了好久，但是真的乐此不彼。
+
+直到后来，会安装和存档了，就一点点打通，看着游戏杂志里，一点点看攻略，加-pos，找隐藏宝物坐标，很喜欢各种反派，傲、席德尔，那时候觉得这些名字酷酷的。说老实话，幻视录和三国英杰传真的是我SLG的启蒙导师，我错过了超时空英雄传说，但是这两个游戏我是真的爱，不是喜欢，是爱。以至于幻视录2我玩的都没啥感觉，觉得差点意思。
+
+今天本来想睡了，看到邮件里说重制版上线，立刻打开电脑，购买，进游戏。。但是这个美术，看着怪怪的，知道看到AI提示，才意识到这个游戏现在画风是真的一眼AI，音乐也不对劲，于是打开经典版音乐选项，瞬间舒服了，回到那个将近30年前的小时候，回到自己最爱的游戏世界。
+
+我不知道有多少人记得宇俊奥汀这个公司，他出了很多游戏，里面都有个神秘男子，会卖很多厉害的东西，但是过时不候。他们还在很多年前出了一款游戏叫做堕落天使，我得印象非常深，现在还有光盘，是真的很好玩很好玩，很早的回合制。也希望能出个这个重置版就好了。
+
+碎碎念念了这么多，可能根本没人看得懂，也没有人玩过这些快30年的游戏了，真是大叔的碎碎念了。。我看着第一个差评，说现在做了一款连页游质量都不如的游戏，我说实话心里很复杂，我清楚的知道，买这个游戏，纯粹是为了童年买单，我也知道那几个好评，可能刚买了游戏5分钟，就和我一样，为了情怀先打了好评再说，但是游戏品质真的，一言难尽，如果没玩过1的人，尤其是没在我们这个年纪，被幻视录、三国英杰传、KKND、超时空英雄传说、三国志4，大富翁，这些游戏在童年抱过的人，我不建议你们买。你们可以去买鬼武者，或者影之灵刃，或者33远征队，都非常好玩也好看。
+
+但是，如果是和我一样经历过那个年代的，宇峻奥汀，哦现在你叫USERJOY。。我就告诉你一句话，就你这些快30年的游戏重置版，哪怕用了一万个AI的美术，哪怕改的面目全非，哪怕偷工减料过来圈我钱。就冲你当年，让一个10岁的孩子，一整个暑假，每天用光盘启动，开开心心的打开HSL的图标，笑着期待着看着雷欧纳德，无数次。
+
+就冲这个，你的游戏再垃圾，你出一个，老子就无脑入一个，你信吗？？</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span><span>有用 3</span></div><p>先給好評了，很用心的可以做出隨時可以切換經典版的音樂，舊版音樂滿滿的回憶，搭配上重製版的畫面!!
+看的出來很用心聆聽玩家要求，加油!!</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span><span>有用 1</span></div><p>首发才81块，还附带简体中文和繁体中文两个版本，不说给情怀补票，就说这价格给2个游戏，还要啥自行车？这可是当年战棋游戏类的超经典作品，当年的国产之光，也是我买的第一款正版游戏（当年68块还是98块买的，那时候家里连电脑都没有，去新华书店买书时看到这个游戏就买下了，因为买游戏的时候暂时还没电脑，只能放VCD机子里面听听BGM，直到2年后小升初家里给买了电脑才玩上，印象深刻），无脑入且必须好评！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.6 小時</span><span>有用 1</span></div><p>还不错，补票童年</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.6 小時</span><span>有用 1</span></div><p>实话实说  定价不便宜  而且还没玩不好评  ，但是为了幻世录2的重置版也能上+情怀买单果断冲了！有良心就快上幻2重置版啊喂！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 0.2 小時</span><span>有用 6</span></div><p>经典战旗游戏，百玩不厌。总算为童年回忆补上一票了……
+希望接下来还有二代，三代新制作推出，UJ继续加油吧。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 0.4 小時</span><span>有用 1</span></div><p>补票补票</p></div></div></div></details><details class="grp"><summary><span class="gname">BUG / 當機</span><span class="gbar"><span class="s-pos" style="width:20.45%"></span><span class="s-neg" style="width:15.91%"></span></span><span class="gnum">評論 <b>16</b><span class="mut">（好 9／負 7）</span>　討論串 <b>5</b></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關討論串</div><ol class=threads><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873507418/" target="_blank" rel="noopener">Bug挺恶心的</a><span class="mut"> · 小火GZ · 1 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873531359/" target="_blank" rel="noopener">無法進入遊戲,有BUG??</a><span class="mut"> · XZERO · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873527228/" target="_blank" rel="noopener">闪退BUG</a><span class="mut"> · 三分寒雨 · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873536890/" target="_blank" rel="noopener">正式版继承不了试玩版的存档</a><span class="mut"> · 17539893 · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873532176/" target="_blank" rel="noopener">第三关成就bug</a><span class="mut"> · julianspand · 0 回覆</span></li></ol></div><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.1 小時</span><span>有用 1</span></div><p>制作组，你们窗口化和全屏有什么区别？真想把两边的黑边甩你们脸上，窗口化不能改分辨率和全屏有什么区别？还有那个比人还大的鼠标，就不能加个模型可以换？有必要这么大吗？上Buff可能miss、伤害性技能和魔法容易闪退</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.1 小時</span></div><p>我咖喱亮的，放魔法就闪退，这最基本的都没弄好就敢拿出来卖81？要疯阿！！！！</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.7 小時</span></div><p>战略类游戏主要考察战略部署，等级不应该是第一位的，而这游戏不练级根本不可能过噩梦，这就没啥意义了。还有些手柄适配的小问题，UI不便捷，读取和存档bug等等，整体属于二点五流水准。</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.2 小時</span><span>有用 1</span></div><p>第三关成就的铁壁之舞怎么都不能完成，就这么几关就来BUG，失望</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.8 小時</span><span>有用 1</span></div><p>赶紧修复 使用伤害魔法就闪退的BUG 这严重影响游戏了  试玩版 没有伤害魔法 就没有测试出来这个严重BUG</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.2 小時</span></div><p>14分钟，连续闪退2次，属实厉害</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.1 小時</span><span>有用 3</span></div><p>我严重怀疑游戏制作者没玩过游戏啊，为什么游戏通关了一直卡界面啊，我真服了，能不能把游戏做完在拿出来卖？这游戏给我的感觉就是路边一条无人在意？内部居然连个测试的都没有，我的天啊！我只能说一周之内不把bug全部修好直接退款。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.3 小時</span></div><p>小時候玩過的，記憶中好像還未通關，電腦就坏了，然後碰上考試，就沒動力重開了。
+一直到二十年多年後的今天，我這次要完成全成就。
+重置版DEMO我玩了覺得很不錯，游戲官方肯聽取玩家意見，
+給予支持這方面還是很給力的，BUG還是得給時間他們慢慢修。
+
+這不是3A大作，有些要求還是得降低一些，這會玩得比較愉快。
+加油吧！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.8 小時</span><span>有用 4</span></div><p>第一关敌人魔法师一用任何魔法，我就闪退？这个不修完全不能玩</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.4 小時</span></div><p>反正我没有碰到那些说卡关的问题，目前已经第10章了，也可能是我继承了试玩版存档的关系，总之目前非常满意</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.6 小時</span></div><p>目前bug好多 动不动就无法过关 而且拿到隐藏奖励无法过 什么都不拿可以正常游戏</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.5 小時</span></div><p>本来想打差评的还是算了，价格合适，比三国群英传8至少好得多毕竟底子还在，有原版可玩不错。卡牌系统和选择难度有点鸡肋，纯战棋游戏就该硬核强迫玩家难度要有。画面一股手游味，这毕竟是电脑或主机游戏，廉价感甚至比一些手游还差，画风比原版差远了，各种纸片图一动一动的看着也增加了辣眼度，要是画面做成3D模型更好。不管抄不抄袭UI你至少要看着按键明了呀，装备图标是非常非常不协调的难看，还不让玩家方便操作，非常辣眼睛，可以用手柄是不错，不过提示因该更多。买卖装备不知道是不是有BUG按下确定经常就直接翻到仓库了，退出商店重进又好了。系统因该改进地形站位加减能力机制，不过对于你们目前不适合做游戏的团队有点艰难。
+新作就别出了，你们是真不适合做游戏，游戏最重要的还是玩法和数据的精致度（这可以参考一些日系RPG），下次重制一下三国群英传7吧，顺便修改一下平衡，可以2D动漫风，但画面别再这样看着像纸片了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.4 小時</span></div><p>读取快速存档的节点是不是有问题啊，为什么经常有角色被空过回合？而且读档不打断当前语音真的很难蚌，战斗还在打村民已经开始发表胜利感言了</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.0 小時</span><span>有用 1</span></div><p>圆梦
+
+不过现在闪退了，更改画面分辨率，或者窗口化都会闪退</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.8 小時</span><span>有用 1</span></div><p>1.8小时玩到12关没有卡死闪退过，试玩版的一些如多段攻击的音效、敌回合不能回溯读档的问题也有修改，价格也算合理范围，好评（评价里有个1.2小时说通关卡死界面的什么成分？）</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 209</span></div><p>唉。。。怎么说呢，一言难尽。。我Steam虽然买了很多游戏，也玩的很多，我甚至干了游戏行业快10年，平时缺不怎么发表评论，这次破天荒想多说几句。。
+
+当年幻视录我玩时候，还是很多很多年前上小学，一开始用光盘，但是不会安装，就每次都是光盘启动，那个HSL的图标，但是由于是光盘启动的，所以每次都没法存档，那个年纪的我又不理解，于是每次只能玩前两关，玩一会吃饭就关了，再开又是前两关，就这么打了好久，但是真的乐此不彼。
+
+直到后来，会安装和存档了，就一点点打通，看着游戏杂志里，一点点看攻略，加-pos，找隐藏宝物坐标，很喜欢各种反派，傲、席德尔，那时候觉得这些名字酷酷的。说老实话，幻视录和三国英杰传真的是我SLG的启蒙导师，我错过了超时空英雄传说，但是这两个游戏我是真的爱，不是喜欢，是爱。以至于幻视录2我玩的都没啥感觉，觉得差点意思。
+
+今天本来想睡了，看到邮件里说重制版上线，立刻打开电脑，购买，进游戏。。但是这个美术，看着怪怪的，知道看到AI提示，才意识到这个游戏现在画风是真的一眼AI，音乐也不对劲，于是打开经典版音乐选项，瞬间舒服了，回到那个将近30年前的小时候，回到自己最爱的游戏世界。
+
+我不知道有多少人记得宇俊奥汀这个公司，他出了很多游戏，里面都有个神秘男子，会卖很多厉害的东西，但是过时不候。他们还在很多年前出了一款游戏叫做堕落天使，我得印象非常深，现在还有光盘，是真的很好玩很好玩，很早的回合制。也希望能出个这个重置版就好了。
+
+碎碎念念了这么多，可能根本没人看得懂，也没有人玩过这些快30年的游戏了，真是大叔的碎碎念了。。我看着第一个差评，说现在做了一款连页游质量都不如的游戏，我说实话心里很复杂，我清楚的知道，买这个游戏，纯粹是为了童年买单，我也知道那几个好评，可能刚买了游戏5分钟，就和我一样，为了情怀先打了好评再说，但是游戏品质真的，一言难尽，如果没玩过1的人，尤其是没在我们这个年纪，被幻视录、三国英杰传、KKND、超时空英雄传说、三国志4，大富翁，这些游戏在童年抱过的人，我不建议你们买。你们可以去买鬼武者，或者影之灵刃，或者33远征队，都非常好玩也好看。
+
+但是，如果是和我一样经历过那个年代的，宇峻奥汀，哦现在你叫USERJOY。。我就告诉你一句话，就你这些快30年的游戏重置版，哪怕用了一万个AI的美术，哪怕改的面目全非，哪怕偷工减料过来圈我钱。就冲你当年，让一个10岁的孩子，一整个暑假，每天用光盘启动，开开心心的打开HSL的图标，笑着期待着看着雷欧纳德，无数次。
+
+就冲这个，你的游戏再垃圾，你出一个，老子就无脑入一个，你信吗？？</p></div></div></div></details><details class="grp"><summary><span class="gname">畫面 / 美術</span><span class="gbar"><span class="s-pos" style="width:36.36%"></span><span class="s-neg" style="width:2.27%"></span></span><span class="gnum">評論 <b>17</b><span class="mut">（好 16／負 1）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.5 小時</span><span>有用 3</span></div><p>首先我只为情怀补个票，但是这个价格我真的是。。。。你也敢？？？？？
+这画风这感觉完全和老版不是一回事，能玩但是很难受，游戏我不退就当补票了，但是差评我给</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.9 小時</span></div><p>跟舊版比起來 重製版多了很多適合現在玩家人性化的設計
+雖然畫面AI感過度強烈 但這樣的收費 又是國產單機遊戲 怎麼能夠不支持呢</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 6.1 小時</span></div><p>認真說，雖然我也對人物立繪有點感冒。倒不是因為 AI ，是總覺得重製版的人物跟以前印象中的人物有著微妙的落差，雷長得太年輕活潑，公主長得太老成。但扣掉這點，以重製版來說我真覺得沒甚麼好挑剔的。
+
+舊的經典版也附上了、難度調整、快轉、回手等方便功能也都有了，語音以台灣配音員陣容來說也夠豪華了，正式版還可以切舊版的音樂。聽說確定其他配角也有三轉，我還沒玩到結局，不知道這次新增的結局如何。
+
+總之我個人是滿意的。
+
+唯一感慨的是以前那種變態難度可以認真玩到全破，現在卻不自覺都直接選最低難度只想爽打，真是老了啊。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 0.3 小時</span></div><p>原版真的可以說是神作中的神作。
+當年的畫面、音樂、劇情和戰棋玩法，那種味道依然無可取代。
+重製版最重要的，不是畫面有多漂亮，而是能不能保留原版最迷人的靈魂。
+畢竟，《幻世錄》這三個字，對很多老玩家來說，本身就是一段回憶。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>韓文</span><span>2026-09-10</span><span>遊玩 1.3 小時</span><span>有用 2</span></div><p>ai일러가 다소 거슬리고
+중국어 음성싫은분은 안하시는게...
+
+움직임스킵해도 느린데요. 컨트롤 누르면 대사진행만 2배빠른게 아니고 전투때도 조금 빨라집니다
+그래도 답답할때가 많고,
+ 추가 미션인 오딘의 뭐시기는 어디다쓰는지 모르겟는데 스토리난이도 아니면 얻기힘든 부분이많네요.
+ 특히 아군 병사 몇명이상 살리라는 미션은 ai가 등신이라 개피여도 쳐박아서 다 뒤져요
+일반 난이도에서도 걔내한테 턴마다 약써주고 그래도안돼면 마법쓰는애 스킬 빗나갈때까지 세로신공 반복해야겨우 가능한정도...
+ 인벤토리 보는것도 불친절합니다. 전투 몇번 끝나야 전체맵나오고 
+ 웃긴건 전투중 얻은 케릭 인벤 내 아이템은 창고로 안보내면 전투 후에 장착이 안되네요? 이건 뭔지?
+
+비추할정도는 아니니까 추천으로 해놓는데, 복합적 정도인듯합니다.
+RPG누렁이면 그냥저냥 할만하고 아니면 30%이상 할인할때 해보시길 추천합니다.
+</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.7 小時</span><span>有用 1</span></div><p>高清画面，新版音乐听不太习惯但可以自己切换到原版音乐。期待幻世录2重制！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>英文</span><span>2026-09-10</span><span>遊玩 2.1 小時</span><span>有用 2</span></div><p>AI立绘确实有些偷懒，配音也让人出戏（酒馆里那只一口又绵又软的台湾腔的狼士兵说的就是你）。不过战旗游戏谁看这个啊，关了语音冲就完事了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span></div><p>补个票，30年前唯一玩通关的游戏！玩了前2关，关卡基本没变，立绘怪怪的，唉！不重要了，不能再坐着了，离咕噜还早的很，争取每天推进2关！
+</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.5 小時</span></div><p>本来想打差评的还是算了，价格合适，比三国群英传8至少好得多毕竟底子还在，有原版可玩不错。卡牌系统和选择难度有点鸡肋，纯战棋游戏就该硬核强迫玩家难度要有。画面一股手游味，这毕竟是电脑或主机游戏，廉价感甚至比一些手游还差，画风比原版差远了，各种纸片图一动一动的看着也增加了辣眼度，要是画面做成3D模型更好。不管抄不抄袭UI你至少要看着按键明了呀，装备图标是非常非常不协调的难看，还不让玩家方便操作，非常辣眼睛，可以用手柄是不错，不过提示因该更多。买卖装备不知道是不是有BUG按下确定经常就直接翻到仓库了，退出商店重进又好了。系统因该改进地形站位加减能力机制，不过对于你们目前不适合做游戏的团队有点艰难。
+新作就别出了，你们是真不适合做游戏，游戏最重要的还是玩法和数据的精致度（这可以参考一些日系RPG），下次重制一下三国群英传7吧，顺便修改一下平衡，可以2D动漫风，但画面别再这样看着像纸片了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.2 小時</span></div><p>补票，童年最美好的回忆，虽然画面AI感很重，在现在各种精美画面的大制作面前有点拿不出手，但确实治好了电子ED，真的是好久没这么投入的玩游戏了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span><span>有用 1</span></div><p>看到这么多说贵的评价，也算是有点明白官方为什么不舍得花钱弄好点的美术了。隔壁今天一起开卖的东方红魔乡重制版卖97块可是好评如潮，人家也是主打怀旧童年的，才800多m大小没啥修改呢，而幻世录这边除了画面，其他修改明显更用心一点。怎么说，你的童年比人家玩东方的童年更轻贱一些吗？</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.7 小時</span></div><p>除了畫面各項表現還不錯.</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.0 小時</span><span>有用 1</span></div><p>圆梦
+
+不过现在闪退了，更改画面分辨率，或者窗口化都会闪退</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.8 小時</span><span>有用 3</span></div><p>之前只知道重制没太关注更新的新闻，没想到这次重制版80块还直接带原版确实意外，而且提供了mod工具将来能拓展可玩性，重制版音乐和原版能随意切换很贴心，好评
+缺点么就是ai立绘真的难看，跟原版都不是一个次元的，花那钱还不如给钱找个美术生按原版重新手画几张，然后就是有点小瑕疵可以优化下，一个是手柄不支持游戏里改确定取消按键，还有个就是原版明明没调动多少cpu资源，最多2个百分比，但是风扇直接1500多呼呼转，应该也可以优化下吧，重制版没有这种情况</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.2 小時</span></div><p>美术风格略手游，但只要琥的转职头像别像原版那么抽象就保持好评
+台配国语亲切，千禧年前后电视上全是这个味
+噩梦难度比原版开局简单，奖励目标比较折腾人
+----------------------------------------------------------------
+我错了，一周目噩梦难度不是人玩的，动态等级太吓人，仅仅是开局简单
+巢窟见汉克斯都难，俩山贼冲上来各抡一斧头雷就剩血皮了</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 209</span></div><p>唉。。。怎么说呢，一言难尽。。我Steam虽然买了很多游戏，也玩的很多，我甚至干了游戏行业快10年，平时缺不怎么发表评论，这次破天荒想多说几句。。
+
+当年幻视录我玩时候，还是很多很多年前上小学，一开始用光盘，但是不会安装，就每次都是光盘启动，那个HSL的图标，但是由于是光盘启动的，所以每次都没法存档，那个年纪的我又不理解，于是每次只能玩前两关，玩一会吃饭就关了，再开又是前两关，就这么打了好久，但是真的乐此不彼。
+
+直到后来，会安装和存档了，就一点点打通，看着游戏杂志里，一点点看攻略，加-pos，找隐藏宝物坐标，很喜欢各种反派，傲、席德尔，那时候觉得这些名字酷酷的。说老实话，幻视录和三国英杰传真的是我SLG的启蒙导师，我错过了超时空英雄传说，但是这两个游戏我是真的爱，不是喜欢，是爱。以至于幻视录2我玩的都没啥感觉，觉得差点意思。
+
+今天本来想睡了，看到邮件里说重制版上线，立刻打开电脑，购买，进游戏。。但是这个美术，看着怪怪的，知道看到AI提示，才意识到这个游戏现在画风是真的一眼AI，音乐也不对劲，于是打开经典版音乐选项，瞬间舒服了，回到那个将近30年前的小时候，回到自己最爱的游戏世界。
+
+我不知道有多少人记得宇俊奥汀这个公司，他出了很多游戏，里面都有个神秘男子，会卖很多厉害的东西，但是过时不候。他们还在很多年前出了一款游戏叫做堕落天使，我得印象非常深，现在还有光盘，是真的很好玩很好玩，很早的回合制。也希望能出个这个重置版就好了。
+
+碎碎念念了这么多，可能根本没人看得懂，也没有人玩过这些快30年的游戏了，真是大叔的碎碎念了。。我看着第一个差评，说现在做了一款连页游质量都不如的游戏，我说实话心里很复杂，我清楚的知道，买这个游戏，纯粹是为了童年买单，我也知道那几个好评，可能刚买了游戏5分钟，就和我一样，为了情怀先打了好评再说，但是游戏品质真的，一言难尽，如果没玩过1的人，尤其是没在我们这个年纪，被幻视录、三国英杰传、KKND、超时空英雄传说、三国志4，大富翁，这些游戏在童年抱过的人，我不建议你们买。你们可以去买鬼武者，或者影之灵刃，或者33远征队，都非常好玩也好看。
+
+但是，如果是和我一样经历过那个年代的，宇峻奥汀，哦现在你叫USERJOY。。我就告诉你一句话，就你这些快30年的游戏重置版，哪怕用了一万个AI的美术，哪怕改的面目全非，哪怕偷工减料过来圈我钱。就冲你当年，让一个10岁的孩子，一整个暑假，每天用光盘启动，开开心心的打开HSL的图标，笑着期待着看着雷欧纳德，无数次。
+
+就冲这个，你的游戏再垃圾，你出一个，老子就无脑入一个，你信吗？？</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span><span>有用 3</span></div><p>先給好評了，很用心的可以做出隨時可以切換經典版的音樂，舊版音樂滿滿的回憶，搭配上重製版的畫面!!
+看的出來很用心聆聽玩家要求，加油!!</p></div></div></div></details><details class="grp"><summary><span class="gname">BGM / 音樂</span><span class="gbar"><span class="s-pos" style="width:31.82%"></span><span class="s-neg" style="width:0.00%"></span></span><span class="gnum">評論 <b>14</b><span class="mut">（好 14／負 0）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 6.1 小時</span></div><p>認真說，雖然我也對人物立繪有點感冒。倒不是因為 AI ，是總覺得重製版的人物跟以前印象中的人物有著微妙的落差，雷長得太年輕活潑，公主長得太老成。但扣掉這點，以重製版來說我真覺得沒甚麼好挑剔的。
+
+舊的經典版也附上了、難度調整、快轉、回手等方便功能也都有了，語音以台灣配音員陣容來說也夠豪華了，正式版還可以切舊版的音樂。聽說確定其他配角也有三轉，我還沒玩到結局，不知道這次新增的結局如何。
+
+總之我個人是滿意的。
+
+唯一感慨的是以前那種變態難度可以認真玩到全破，現在卻不自覺都直接選最低難度只想爽打，真是老了啊。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 0.3 小時</span></div><p>原版真的可以說是神作中的神作。
+當年的畫面、音樂、劇情和戰棋玩法，那種味道依然無可取代。
+重製版最重要的，不是畫面有多漂亮，而是能不能保留原版最迷人的靈魂。
+畢竟，《幻世錄》這三個字，對很多老玩家來說，本身就是一段回憶。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 2.9 小時</span><span>有用 2</span></div><p>這次重製版有很多細節增加,變得更符合現代高品質遊戲的要求,音樂也有新增好聽的,像緹娜第三關就很好聽,有需要也可以調回去原版的音樂,老玩家都必買啦. 這篇是我詳記重製版的優點的文章:https://forum.gamer.com.tw/C.php?bsn=3490&amp;snA=358&amp;tnum=1          
+歡迎大家一起來討論幻世錄!</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.9 小時</span></div><p>好评给可以替换原版音乐和创意工坊</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.7 小時</span></div><p>夢回小時候~就是要用經典版音樂玩!! 
+感謝重制能讓我再次用雷歐納德的視角體驗這段傳奇的冒險~</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.7 小時</span><span>有用 1</span></div><p>高清画面，新版音乐听不太习惯但可以自己切换到原版音乐。期待幻世录2重制！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span></div><p>纯粹为情怀买单，欠你一个20年前的licence fee。传统版音乐响起的时候，的确很有共鸣。这个游戏都不需要写攻略，网上找找以前的还能用，呵呵。制作组实在太不走心了，被骂也是理所应当，中文配音都是什么娘娘腔，想切换配音还要把语言也换了。。。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.3 小時</span></div><p>小学时新华书店69买的第一款游戏，现在81买重置还送原版，真不错啊。当时整个暑假一直玩这个游戏，BGM一定要选经典版，还是内个味儿，爷青回！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.8 小時</span><span>有用 3</span></div><p>之前只知道重制没太关注更新的新闻，没想到这次重制版80块还直接带原版确实意外，而且提供了mod工具将来能拓展可玩性，重制版音乐和原版能随意切换很贴心，好评
+缺点么就是ai立绘真的难看，跟原版都不是一个次元的，花那钱还不如给钱找个美术生按原版重新手画几张，然后就是有点小瑕疵可以优化下，一个是手柄不支持游戏里改确定取消按键，还有个就是原版明明没调动多少cpu资源，最多2个百分比，但是风扇直接1500多呼呼转，应该也可以优化下吧，重制版没有这种情况</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.8 小時</span><span>有用 1</span></div><p>1.8小时玩到12关没有卡死闪退过，试玩版的一些如多段攻击的音效、敌回合不能回溯读档的问题也有修改，价格也算合理范围，好评（评价里有个1.2小时说通关卡死界面的什么成分？）</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 3</span></div><p>事實證明，捱夜係值得嘅，9號晚都未有消息，等到12點後一睇，卒之上架啦 ^_^
+As my saying goes, where there is a night owl, there is a Purchasing Opportunity for "The Legend of Fancy Realm" Still no news on the evening of the 9th, but after waiting past midnight — it finally went live! ^_^
+
+作為侏羅紀時期就開始鍾意《幻世錄》嘅001號fans，梗係要支持一下奧汀啦！
+As the No. 001 fan who is a die-hard fan since the Jurassic period, of course I have to support Odin (Userjoy)!
+
+奧汀閣下，乜嘢《幻世錄》2代、《超時空英雄傳說》、《幻想紀元》、《異域狂想曲》、《墮落天使》……一齊上啦，你肯上我就肯買。
+Odin (Userjoy) Sama, please relaunch "The Legend of Fancy Realm 2", "Super series", "Fancy Centur", "‌The Fool Plate", "The Fallen Angel"... Come on, your promise, my purchasing without hesitation.
+
+順求官方 [h1]粵語配音及主題曲 [/h1]，感謝！
+Requesting official  [h1]Cantonese Dubbing and a Cantonese Theme Song[/h1], thank you very much!
+
+運行遊戲後，可以揀「經典版/繁中」、「經典版/簡中」或「重製版」。
+After launching the game, you can choose between "Classic Edition / Traditional Chinese", "Classic Edition / Simplified Chinese" or "Remake Edition".
+
+「經典版」版本號係1.06，「簡中」冇寰宇之星提示，仲係經典「磨擊力」:D。
+The version of "Classic Edition" is 1.06, with no "Unistar" prompt in the "Simplified Chinese" version. "Maggie Power", the classic mistranslation as usual :D.
+
+可以按 Alt+Enter 切換全屏或窗口，遊戲識自動保存全屏設定。
+You can toggle between fullscreen and windowed mode by pressing Alt+Enter, and the game will automatically save the fullscreen settings.
+
+再來睇重製版
+Let's take another look at the Remake.
+
+比試玩版改進咗好多，譬如唔會扣少少血就換成嘔血想死咁款。
+The demo version has been improved a lot, such as losing a little HP no longer triggers the vomiting blood like dying
+
+「音樂」吸取咗玩家意見，可以按個人喜好揀「經典版」或「重製版」。
+The "Music" feature incorporates player feedback, allowing users to choose between the "Classic Edition" or the "Remake Edition" based on personal preferences.
+
+一揀「經典版音樂」，感覺返晒來啦！
+Select the "Classic Edition Music" and feel like you're back in the old days!
+
+「回憶錄」菜單可以睇CG、對白同動畫。
+The "Memories" menu allows you to watch CG, Dialogue, and Movies.
+
+「創意工坊」超級強大，奧汀超級大方，抵讚！
+Workshop is super powerful, and Odin (Userjoy) is incredibly generous — well done!
+
+可以導出遊戲文本及配音劇本，
+You can export Localization texts and Voice recording lists.
+
+可以修改圖片、音樂、配音、文本、字體、裝備（含數值）
+You can modify Appearance, Music &amp; SFX, Voice, Localization, Fonts, and Equipment (including stats).
+
+欲知詳情如何，且聽下回分解……
+For more details, stay tuned for the next installment...</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 209</span></div><p>唉。。。怎么说呢，一言难尽。。我Steam虽然买了很多游戏，也玩的很多，我甚至干了游戏行业快10年，平时缺不怎么发表评论，这次破天荒想多说几句。。
+
+当年幻视录我玩时候，还是很多很多年前上小学，一开始用光盘，但是不会安装，就每次都是光盘启动，那个HSL的图标，但是由于是光盘启动的，所以每次都没法存档，那个年纪的我又不理解，于是每次只能玩前两关，玩一会吃饭就关了，再开又是前两关，就这么打了好久，但是真的乐此不彼。
+
+直到后来，会安装和存档了，就一点点打通，看着游戏杂志里，一点点看攻略，加-pos，找隐藏宝物坐标，很喜欢各种反派，傲、席德尔，那时候觉得这些名字酷酷的。说老实话，幻视录和三国英杰传真的是我SLG的启蒙导师，我错过了超时空英雄传说，但是这两个游戏我是真的爱，不是喜欢，是爱。以至于幻视录2我玩的都没啥感觉，觉得差点意思。
+
+今天本来想睡了，看到邮件里说重制版上线，立刻打开电脑，购买，进游戏。。但是这个美术，看着怪怪的，知道看到AI提示，才意识到这个游戏现在画风是真的一眼AI，音乐也不对劲，于是打开经典版音乐选项，瞬间舒服了，回到那个将近30年前的小时候，回到自己最爱的游戏世界。
+
+我不知道有多少人记得宇俊奥汀这个公司，他出了很多游戏，里面都有个神秘男子，会卖很多厉害的东西，但是过时不候。他们还在很多年前出了一款游戏叫做堕落天使，我得印象非常深，现在还有光盘，是真的很好玩很好玩，很早的回合制。也希望能出个这个重置版就好了。
+
+碎碎念念了这么多，可能根本没人看得懂，也没有人玩过这些快30年的游戏了，真是大叔的碎碎念了。。我看着第一个差评，说现在做了一款连页游质量都不如的游戏，我说实话心里很复杂，我清楚的知道，买这个游戏，纯粹是为了童年买单，我也知道那几个好评，可能刚买了游戏5分钟，就和我一样，为了情怀先打了好评再说，但是游戏品质真的，一言难尽，如果没玩过1的人，尤其是没在我们这个年纪，被幻视录、三国英杰传、KKND、超时空英雄传说、三国志4，大富翁，这些游戏在童年抱过的人，我不建议你们买。你们可以去买鬼武者，或者影之灵刃，或者33远征队，都非常好玩也好看。
+
+但是，如果是和我一样经历过那个年代的，宇峻奥汀，哦现在你叫USERJOY。。我就告诉你一句话，就你这些快30年的游戏重置版，哪怕用了一万个AI的美术，哪怕改的面目全非，哪怕偷工减料过来圈我钱。就冲你当年，让一个10岁的孩子，一整个暑假，每天用光盘启动，开开心心的打开HSL的图标，笑着期待着看着雷欧纳德，无数次。
+
+就冲这个，你的游戏再垃圾，你出一个，老子就无脑入一个，你信吗？？</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span><span>有用 3</span></div><p>先給好評了，很用心的可以做出隨時可以切換經典版的音樂，舊版音樂滿滿的回憶，搭配上重製版的畫面!!
+看的出來很用心聆聽玩家要求，加油!!</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span><span>有用 1</span></div><p>首发才81块，还附带简体中文和繁体中文两个版本，不说给情怀补票，就说这价格给2个游戏，还要啥自行车？这可是当年战棋游戏类的超经典作品，当年的国产之光，也是我买的第一款正版游戏（当年68块还是98块买的，那时候家里连电脑都没有，去新华书店买书时看到这个游戏就买下了，因为买游戏的时候暂时还没电脑，只能放VCD机子里面听听BGM，直到2年后小升初家里给买了电脑才玩上，印象深刻），无脑入且必须好评！</p></div></div></div></details><details class="grp"><summary><span class="gname">續作 / 二代</span><span class="gbar"><span class="s-pos" style="width:29.55%"></span><span class="s-neg" style="width:0.00%"></span></span><span class="gnum">評論 <b>13</b><span class="mut">（好 13／負 0）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.5 小時</span></div><p>这是第二次买幻世录了，支持一份希望能继续出二代，让我二代也再买一次。当然最好能三代也续写下去</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.7 小時</span><span>有用 1</span></div><p>高清画面，新版音乐听不太习惯但可以自己切换到原版音乐。期待幻世录2重制！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 6.0 小時</span></div><p>这个价格明显是没性价比的，但我愿意买给童年的自己，希望可以玩到幻世录2重置版</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.2 小時</span></div><p>为情怀补票，诚意满满的重置，魂穿最美好的学生游戏时光，把自己的作品排队复刻吧，幻三，超时空英雄传说，绝代双骄。。。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.1 小時</span></div><p>童年的回忆啊，玩过原版的都是老登了吧（笑）。浅玩了一下还不错，能让我继续玩下去。希望吧幻世录2重置提上日程。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.2 小時</span><span>有用 2</span></div><p>什么时候重制超时空英雄传说？什么时候重制超时空英雄传说？
+强烈要求重制超时空英雄传说</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.2 小時</span><span>有用 3</span></div><p>很少首发入手游戏，算是补票了，希望能出幻世录2重制，也奢望能出3</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.0 小時</span><span>有用 1</span></div><p>好玩，无条件好评。早点把二代重制了，再制作下第三代</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 3</span></div><p>事實證明，捱夜係值得嘅，9號晚都未有消息，等到12點後一睇，卒之上架啦 ^_^
+As my saying goes, where there is a night owl, there is a Purchasing Opportunity for "The Legend of Fancy Realm" Still no news on the evening of the 9th, but after waiting past midnight — it finally went live! ^_^
+
+作為侏羅紀時期就開始鍾意《幻世錄》嘅001號fans，梗係要支持一下奧汀啦！
+As the No. 001 fan who is a die-hard fan since the Jurassic period, of course I have to support Odin (Userjoy)!
+
+奧汀閣下，乜嘢《幻世錄》2代、《超時空英雄傳說》、《幻想紀元》、《異域狂想曲》、《墮落天使》……一齊上啦，你肯上我就肯買。
+Odin (Userjoy) Sama, please relaunch "The Legend of Fancy Realm 2", "Super series", "Fancy Centur", "‌The Fool Plate", "The Fallen Angel"... Come on, your promise, my purchasing without hesitation.
+
+順求官方 [h1]粵語配音及主題曲 [/h1]，感謝！
+Requesting official  [h1]Cantonese Dubbing and a Cantonese Theme Song[/h1], thank you very much!
+
+運行遊戲後，可以揀「經典版/繁中」、「經典版/簡中」或「重製版」。
+After launching the game, you can choose between "Classic Edition / Traditional Chinese", "Classic Edition / Simplified Chinese" or "Remake Edition".
+
+「經典版」版本號係1.06，「簡中」冇寰宇之星提示，仲係經典「磨擊力」:D。
+The version of "Classic Edition" is 1.06, with no "Unistar" prompt in the "Simplified Chinese" version. "Maggie Power", the classic mistranslation as usual :D.
+
+可以按 Alt+Enter 切換全屏或窗口，遊戲識自動保存全屏設定。
+You can toggle between fullscreen and windowed mode by pressing Alt+Enter, and the game will automatically save the fullscreen settings.
+
+再來睇重製版
+Let's take another look at the Remake.
+
+比試玩版改進咗好多，譬如唔會扣少少血就換成嘔血想死咁款。
+The demo version has been improved a lot, such as losing a little HP no longer triggers the vomiting blood like dying
+
+「音樂」吸取咗玩家意見，可以按個人喜好揀「經典版」或「重製版」。
+The "Music" feature incorporates player feedback, allowing users to choose between the "Classic Edition" or the "Remake Edition" based on personal preferences.
+
+一揀「經典版音樂」，感覺返晒來啦！
+Select the "Classic Edition Music" and feel like you're back in the old days!
+
+「回憶錄」菜單可以睇CG、對白同動畫。
+The "Memories" menu allows you to watch CG, Dialogue, and Movies.
+
+「創意工坊」超級強大，奧汀超級大方，抵讚！
+Workshop is super powerful, and Odin (Userjoy) is incredibly generous — well done!
+
+可以導出遊戲文本及配音劇本，
+You can export Localization texts and Voice recording lists.
+
+可以修改圖片、音樂、配音、文本、字體、裝備（含數值）
+You can modify Appearance, Music &amp; SFX, Voice, Localization, Fonts, and Equipment (including stats).
+
+欲知詳情如何，且聽下回分解……
+For more details, stay tuned for the next installment...</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 209</span></div><p>唉。。。怎么说呢，一言难尽。。我Steam虽然买了很多游戏，也玩的很多，我甚至干了游戏行业快10年，平时缺不怎么发表评论，这次破天荒想多说几句。。
+
+当年幻视录我玩时候，还是很多很多年前上小学，一开始用光盘，但是不会安装，就每次都是光盘启动，那个HSL的图标，但是由于是光盘启动的，所以每次都没法存档，那个年纪的我又不理解，于是每次只能玩前两关，玩一会吃饭就关了，再开又是前两关，就这么打了好久，但是真的乐此不彼。
+
+直到后来，会安装和存档了，就一点点打通，看着游戏杂志里，一点点看攻略，加-pos，找隐藏宝物坐标，很喜欢各种反派，傲、席德尔，那时候觉得这些名字酷酷的。说老实话，幻视录和三国英杰传真的是我SLG的启蒙导师，我错过了超时空英雄传说，但是这两个游戏我是真的爱，不是喜欢，是爱。以至于幻视录2我玩的都没啥感觉，觉得差点意思。
+
+今天本来想睡了，看到邮件里说重制版上线，立刻打开电脑，购买，进游戏。。但是这个美术，看着怪怪的，知道看到AI提示，才意识到这个游戏现在画风是真的一眼AI，音乐也不对劲，于是打开经典版音乐选项，瞬间舒服了，回到那个将近30年前的小时候，回到自己最爱的游戏世界。
+
+我不知道有多少人记得宇俊奥汀这个公司，他出了很多游戏，里面都有个神秘男子，会卖很多厉害的东西，但是过时不候。他们还在很多年前出了一款游戏叫做堕落天使，我得印象非常深，现在还有光盘，是真的很好玩很好玩，很早的回合制。也希望能出个这个重置版就好了。
+
+碎碎念念了这么多，可能根本没人看得懂，也没有人玩过这些快30年的游戏了，真是大叔的碎碎念了。。我看着第一个差评，说现在做了一款连页游质量都不如的游戏，我说实话心里很复杂，我清楚的知道，买这个游戏，纯粹是为了童年买单，我也知道那几个好评，可能刚买了游戏5分钟，就和我一样，为了情怀先打了好评再说，但是游戏品质真的，一言难尽，如果没玩过1的人，尤其是没在我们这个年纪，被幻视录、三国英杰传、KKND、超时空英雄传说、三国志4，大富翁，这些游戏在童年抱过的人，我不建议你们买。你们可以去买鬼武者，或者影之灵刃，或者33远征队，都非常好玩也好看。
+
+但是，如果是和我一样经历过那个年代的，宇峻奥汀，哦现在你叫USERJOY。。我就告诉你一句话，就你这些快30年的游戏重置版，哪怕用了一万个AI的美术，哪怕改的面目全非，哪怕偷工减料过来圈我钱。就冲你当年，让一个10岁的孩子，一整个暑假，每天用光盘启动，开开心心的打开HSL的图标，笑着期待着看着雷欧纳德，无数次。
+
+就冲这个，你的游戏再垃圾，你出一个，老子就无脑入一个，你信吗？？</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.5 小時</span><span>有用 16</span></div><p>虽然说感觉有点怪怪的 但是还是很有诚意的 期待做幻世录2 及 超时空英雄传说的重置版 或者幻世录3 也行</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.6 小時</span><span>有用 1</span></div><p>实话实说  定价不便宜  而且还没玩不好评  ，但是为了幻世录2的重置版也能上+情怀买单果断冲了！有良心就快上幻2重置版啊喂！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 0.2 小時</span><span>有用 6</span></div><p>经典战旗游戏，百玩不厌。总算为童年回忆补上一票了……
+希望接下来还有二代，三代新制作推出，UJ继续加油吧。</p></div></div></div></details><details class="grp"><summary><span class="gname">發售日 / 價格</span><span class="gbar"><span class="s-pos" style="width:20.45%"></span><span class="s-neg" style="width:4.55%"></span></span><span class="gnum">評論 <b>11</b><span class="mut">（好 9／負 2）</span>　討論串 <b>1</b></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關討論串</div><ol class=threads><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873536890/" target="_blank" rel="noopener">正式版继承不了试玩版的存档</a><span class="mut"> · 17539893 · 0 回覆</span></li></ol></div><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.5 小時</span><span>有用 3</span></div><p>首先我只为情怀补个票，但是这个价格我真的是。。。。你也敢？？？？？
+这画风这感觉完全和老版不是一回事，能玩但是很难受，游戏我不退就当补票了，但是差评我给</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.4 小時</span><span>有用 6</span></div><p>你也配这价格？</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.7 小時</span></div><p>DNA觉醒、梦回初中时代，必须狠狠的给个赞，把当年那些战棋经典都端上来吧，天地劫、致命武力、炎龙，我愿意出3A的价格，而且可以买期货，上链接就行，来者不拒</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 6.0 小時</span></div><p>这个价格明显是没性价比的，但我愿意买给童年的自己，希望可以玩到幻世录2重置版</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.4 小時</span></div><p>反正我没有碰到那些说卡关的问题，目前已经第10章了，也可能是我继承了试玩版存档的关系，总之目前非常满意</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.5 小時</span></div><p>本来想打差评的还是算了，价格合适，比三国群英传8至少好得多毕竟底子还在，有原版可玩不错。卡牌系统和选择难度有点鸡肋，纯战棋游戏就该硬核强迫玩家难度要有。画面一股手游味，这毕竟是电脑或主机游戏，廉价感甚至比一些手游还差，画风比原版差远了，各种纸片图一动一动的看着也增加了辣眼度，要是画面做成3D模型更好。不管抄不抄袭UI你至少要看着按键明了呀，装备图标是非常非常不协调的难看，还不让玩家方便操作，非常辣眼睛，可以用手柄是不错，不过提示因该更多。买卖装备不知道是不是有BUG按下确定经常就直接翻到仓库了，退出商店重进又好了。系统因该改进地形站位加减能力机制，不过对于你们目前不适合做游戏的团队有点艰难。
+新作就别出了，你们是真不适合做游戏，游戏最重要的还是玩法和数据的精致度（这可以参考一些日系RPG），下次重制一下三国群英传7吧，顺便修改一下平衡，可以2D动漫风，但画面别再这样看着像纸片了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.1 小時</span></div><p>终于玩上了，毕竟小成本作品，制作组有没有10个人都不好说。不过价格也算接地气。怀旧党有福了，1998年的作品还能重制已经非常不容易了，童年白月光。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.8 小時</span><span>有用 1</span></div><p>1.8小时玩到12关没有卡死闪退过，试玩版的一些如多段攻击的音效、敌回合不能回溯读档的问题也有修改，价格也算合理范围，好评（评价里有个1.2小时说通关卡死界面的什么成分？）</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 209</span></div><p>唉。。。怎么说呢，一言难尽。。我Steam虽然买了很多游戏，也玩的很多，我甚至干了游戏行业快10年，平时缺不怎么发表评论，这次破天荒想多说几句。。
+
+当年幻视录我玩时候，还是很多很多年前上小学，一开始用光盘，但是不会安装，就每次都是光盘启动，那个HSL的图标，但是由于是光盘启动的，所以每次都没法存档，那个年纪的我又不理解，于是每次只能玩前两关，玩一会吃饭就关了，再开又是前两关，就这么打了好久，但是真的乐此不彼。
+
+直到后来，会安装和存档了，就一点点打通，看着游戏杂志里，一点点看攻略，加-pos，找隐藏宝物坐标，很喜欢各种反派，傲、席德尔，那时候觉得这些名字酷酷的。说老实话，幻视录和三国英杰传真的是我SLG的启蒙导师，我错过了超时空英雄传说，但是这两个游戏我是真的爱，不是喜欢，是爱。以至于幻视录2我玩的都没啥感觉，觉得差点意思。
+
+今天本来想睡了，看到邮件里说重制版上线，立刻打开电脑，购买，进游戏。。但是这个美术，看着怪怪的，知道看到AI提示，才意识到这个游戏现在画风是真的一眼AI，音乐也不对劲，于是打开经典版音乐选项，瞬间舒服了，回到那个将近30年前的小时候，回到自己最爱的游戏世界。
+
+我不知道有多少人记得宇俊奥汀这个公司，他出了很多游戏，里面都有个神秘男子，会卖很多厉害的东西，但是过时不候。他们还在很多年前出了一款游戏叫做堕落天使，我得印象非常深，现在还有光盘，是真的很好玩很好玩，很早的回合制。也希望能出个这个重置版就好了。
+
+碎碎念念了这么多，可能根本没人看得懂，也没有人玩过这些快30年的游戏了，真是大叔的碎碎念了。。我看着第一个差评，说现在做了一款连页游质量都不如的游戏，我说实话心里很复杂，我清楚的知道，买这个游戏，纯粹是为了童年买单，我也知道那几个好评，可能刚买了游戏5分钟，就和我一样，为了情怀先打了好评再说，但是游戏品质真的，一言难尽，如果没玩过1的人，尤其是没在我们这个年纪，被幻视录、三国英杰传、KKND、超时空英雄传说、三国志4，大富翁，这些游戏在童年抱过的人，我不建议你们买。你们可以去买鬼武者，或者影之灵刃，或者33远征队，都非常好玩也好看。
+
+但是，如果是和我一样经历过那个年代的，宇峻奥汀，哦现在你叫USERJOY。。我就告诉你一句话，就你这些快30年的游戏重置版，哪怕用了一万个AI的美术，哪怕改的面目全非，哪怕偷工减料过来圈我钱。就冲你当年，让一个10岁的孩子，一整个暑假，每天用光盘启动，开开心心的打开HSL的图标，笑着期待着看着雷欧纳德，无数次。
+
+就冲这个，你的游戏再垃圾，你出一个，老子就无脑入一个，你信吗？？</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span><span>有用 1</span></div><p>首发才81块，还附带简体中文和繁体中文两个版本，不说给情怀补票，就说这价格给2个游戏，还要啥自行车？这可是当年战棋游戏类的超经典作品，当年的国产之光，也是我买的第一款正版游戏（当年68块还是98块买的，那时候家里连电脑都没有，去新华书店买书时看到这个游戏就买下了，因为买游戏的时候暂时还没电脑，只能放VCD机子里面听听BGM，直到2年后小升初家里给买了电脑才玩上，印象深刻），无脑入且必须好评！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.6 小時</span><span>有用 1</span></div><p>实话实说  定价不便宜  而且还没玩不好评  ，但是为了幻世录2的重置版也能上+情怀买单果断冲了！有良心就快上幻2重置版啊喂！</p></div></div></div></details><details class="grp"><summary><span class="gname">配音 / 語音</span><span class="gbar"><span class="s-pos" style="width:20.45%"></span><span class="s-neg" style="width:0.00%"></span></span><span class="gnum">評論 <b>9</b><span class="mut">（好 9／負 0）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 6.1 小時</span></div><p>認真說，雖然我也對人物立繪有點感冒。倒不是因為 AI ，是總覺得重製版的人物跟以前印象中的人物有著微妙的落差，雷長得太年輕活潑，公主長得太老成。但扣掉這點，以重製版來說我真覺得沒甚麼好挑剔的。
+
+舊的經典版也附上了、難度調整、快轉、回手等方便功能也都有了，語音以台灣配音員陣容來說也夠豪華了，正式版還可以切舊版的音樂。聽說確定其他配角也有三轉，我還沒玩到結局，不知道這次新增的結局如何。
+
+總之我個人是滿意的。
+
+唯一感慨的是以前那種變態難度可以認真玩到全破，現在卻不自覺都直接選最低難度只想爽打，真是老了啊。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.6 小時</span></div><p>新的人物造型，安裝人物語音，過場動態人物表演，操作感的流暢與直覺性，劇情的補強和職業的更新，可以立刻調整的難度與快速的讀檔速度，種種細節都可以看得出製作組的用心，這才是真正好的重製。必須給一個讚!!!
+不得不在這裡臭一下暗恥，連重製版都做不好，只會巧立名目反覆收割粉絲的情懷，壓榨粉絲的荷包，說的遊戲規劃跟屁一樣，推出的更新內容跟便秘一般，拉坨屎都不乾脆，今天有搞了一個威力加強傳承版上市。
+對比本作的重製版，傳承根本如同兒戲。我話就放在這邊，要是暗榮你這次沒搞威加強傳承版之威力再加強版，我790元就花下去，下一代的信長野望，我也絕對買!</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>韓文</span><span>2026-09-10</span><span>遊玩 1.3 小時</span><span>有用 2</span></div><p>ai일러가 다소 거슬리고
+중국어 음성싫은분은 안하시는게...
+
+움직임스킵해도 느린데요. 컨트롤 누르면 대사진행만 2배빠른게 아니고 전투때도 조금 빨라집니다
+그래도 답답할때가 많고,
+ 추가 미션인 오딘의 뭐시기는 어디다쓰는지 모르겟는데 스토리난이도 아니면 얻기힘든 부분이많네요.
+ 특히 아군 병사 몇명이상 살리라는 미션은 ai가 등신이라 개피여도 쳐박아서 다 뒤져요
+일반 난이도에서도 걔내한테 턴마다 약써주고 그래도안돼면 마법쓰는애 스킬 빗나갈때까지 세로신공 반복해야겨우 가능한정도...
+ 인벤토리 보는것도 불친절합니다. 전투 몇번 끝나야 전체맵나오고 
+ 웃긴건 전투중 얻은 케릭 인벤 내 아이템은 창고로 안보내면 전투 후에 장착이 안되네요? 이건 뭔지?
+
+비추할정도는 아니니까 추천으로 해놓는데, 복합적 정도인듯합니다.
+RPG누렁이면 그냥저냥 할만하고 아니면 30%이상 할인할때 해보시길 추천합니다.
+</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span></div><p>纯粹为情怀买单，欠你一个20年前的licence fee。传统版音乐响起的时候，的确很有共鸣。这个游戏都不需要写攻略，网上找找以前的还能用，呵呵。制作组实在太不走心了，被骂也是理所应当，中文配音都是什么娘娘腔，想切换配音还要把语言也换了。。。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.5 小時</span></div><p>不行了，听到女主的配音突然就没绷住，觉得她要变身迪亚布罗了。。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>英文</span><span>2026-09-10</span><span>遊玩 2.1 小時</span><span>有用 2</span></div><p>AI立绘确实有些偷懒，配音也让人出戏（酒馆里那只一口又绵又软的台湾腔的狼士兵说的就是你）。不过战旗游戏谁看这个啊，关了语音冲就完事了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.9 小時</span><span>有用 2</span></div><p>重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2
+加个开关能关闭这尴尬的AI配音
+加个开关能关闭这尴尬的AI配音
+加个开关能关闭这尴尬的AI配音</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.4 小時</span></div><p>读取快速存档的节点是不是有问题啊，为什么经常有角色被空过回合？而且读档不打断当前语音真的很难蚌，战斗还在打村民已经开始发表胜利感言了</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 3</span></div><p>事實證明，捱夜係值得嘅，9號晚都未有消息，等到12點後一睇，卒之上架啦 ^_^
+As my saying goes, where there is a night owl, there is a Purchasing Opportunity for "The Legend of Fancy Realm" Still no news on the evening of the 9th, but after waiting past midnight — it finally went live! ^_^
+
+作為侏羅紀時期就開始鍾意《幻世錄》嘅001號fans，梗係要支持一下奧汀啦！
+As the No. 001 fan who is a die-hard fan since the Jurassic period, of course I have to support Odin (Userjoy)!
+
+奧汀閣下，乜嘢《幻世錄》2代、《超時空英雄傳說》、《幻想紀元》、《異域狂想曲》、《墮落天使》……一齊上啦，你肯上我就肯買。
+Odin (Userjoy) Sama, please relaunch "The Legend of Fancy Realm 2", "Super series", "Fancy Centur", "‌The Fool Plate", "The Fallen Angel"... Come on, your promise, my purchasing without hesitation.
+
+順求官方 [h1]粵語配音及主題曲 [/h1]，感謝！
+Requesting official  [h1]Cantonese Dubbing and a Cantonese Theme Song[/h1], thank you very much!
+
+運行遊戲後，可以揀「經典版/繁中」、「經典版/簡中」或「重製版」。
+After launching the game, you can choose between "Classic Edition / Traditional Chinese", "Classic Edition / Simplified Chinese" or "Remake Edition".
+
+「經典版」版本號係1.06，「簡中」冇寰宇之星提示，仲係經典「磨擊力」:D。
+The version of "Classic Edition" is 1.06, with no "Unistar" prompt in the "Simplified Chinese" version. "Maggie Power", the classic mistranslation as usual :D.
+
+可以按 Alt+Enter 切換全屏或窗口，遊戲識自動保存全屏設定。
+You can toggle between fullscreen and windowed mode by pressing Alt+Enter, and the game will automatically save the fullscreen settings.
+
+再來睇重製版
+Let's take another look at the Remake.
+
+比試玩版改進咗好多，譬如唔會扣少少血就換成嘔血想死咁款。
+The demo version has been improved a lot, such as losing a little HP no longer triggers the vomiting blood like dying
+
+「音樂」吸取咗玩家意見，可以按個人喜好揀「經典版」或「重製版」。
+The "Music" feature incorporates player feedback, allowing users to choose between the "Classic Edition" or the "Remake Edition" based on personal preferences.
+
+一揀「經典版音樂」，感覺返晒來啦！
+Select the "Classic Edition Music" and feel like you're back in the old days!
+
+「回憶錄」菜單可以睇CG、對白同動畫。
+The "Memories" menu allows you to watch CG, Dialogue, and Movies.
+
+「創意工坊」超級強大，奧汀超級大方，抵讚！
+Workshop is super powerful, and Odin (Userjoy) is incredibly generous — well done!
+
+可以導出遊戲文本及配音劇本，
+You can export Localization texts and Voice recording lists.
+
+可以修改圖片、音樂、配音、文本、字體、裝備（含數值）
+You can modify Appearance, Music &amp; SFX, Voice, Localization, Fonts, and Equipment (including stats).
+
+欲知詳情如何，且聽下回分解……
+For more details, stay tuned for the next installment...</p></div></div></div></details><details class="grp"><summary><span class="gname">數值 / 平衡</span><span class="gbar"><span class="s-pos" style="width:15.91%"></span><span class="s-neg" style="width:0.00%"></span></span><span class="gnum">評論 <b>7</b><span class="mut">（好 7／負 0）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.6 小時</span></div><p>童年最喜欢的战旗之一，现在在玩经典版回忆一遍，打完再玩重制版，重置试玩了一会最高难度，敌对血是真的厚，老版的气刃斩都是秒人的，重制版气刃斩伤害只能打半血，其他队友的技能伤害也比气刃斩高，气刃斩伤害是不是下调了，还有挑战任务，玩起来比老版难度高多了</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 6.1 小時</span></div><p>認真說，雖然我也對人物立繪有點感冒。倒不是因為 AI ，是總覺得重製版的人物跟以前印象中的人物有著微妙的落差，雷長得太年輕活潑，公主長得太老成。但扣掉這點，以重製版來說我真覺得沒甚麼好挑剔的。
+
+舊的經典版也附上了、難度調整、快轉、回手等方便功能也都有了，語音以台灣配音員陣容來說也夠豪華了，正式版還可以切舊版的音樂。聽說確定其他配角也有三轉，我還沒玩到結局，不知道這次新增的結局如何。
+
+總之我個人是滿意的。
+
+唯一感慨的是以前那種變態難度可以認真玩到全破，現在卻不自覺都直接選最低難度只想爽打，真是老了啊。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.6 小時</span></div><p>新的人物造型，安裝人物語音，過場動態人物表演，操作感的流暢與直覺性，劇情的補強和職業的更新，可以立刻調整的難度與快速的讀檔速度，種種細節都可以看得出製作組的用心，這才是真正好的重製。必須給一個讚!!!
+不得不在這裡臭一下暗恥，連重製版都做不好，只會巧立名目反覆收割粉絲的情懷，壓榨粉絲的荷包，說的遊戲規劃跟屁一樣，推出的更新內容跟便秘一般，拉坨屎都不乾脆，今天有搞了一個威力加強傳承版上市。
+對比本作的重製版，傳承根本如同兒戲。我話就放在這邊，要是暗榮你這次沒搞威加強傳承版之威力再加強版，我790元就花下去，下一代的信長野望，我也絕對買!</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.5 小時</span></div><p>本来想打差评的还是算了，价格合适，比三国群英传8至少好得多毕竟底子还在，有原版可玩不错。卡牌系统和选择难度有点鸡肋，纯战棋游戏就该硬核强迫玩家难度要有。画面一股手游味，这毕竟是电脑或主机游戏，廉价感甚至比一些手游还差，画风比原版差远了，各种纸片图一动一动的看着也增加了辣眼度，要是画面做成3D模型更好。不管抄不抄袭UI你至少要看着按键明了呀，装备图标是非常非常不协调的难看，还不让玩家方便操作，非常辣眼睛，可以用手柄是不错，不过提示因该更多。买卖装备不知道是不是有BUG按下确定经常就直接翻到仓库了，退出商店重进又好了。系统因该改进地形站位加减能力机制，不过对于你们目前不适合做游戏的团队有点艰难。
+新作就别出了，你们是真不适合做游戏，游戏最重要的还是玩法和数据的精致度（这可以参考一些日系RPG），下次重制一下三国群英传7吧，顺便修改一下平衡，可以2D动漫风，但画面别再这样看着像纸片了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.8 小時</span><span>有用 1</span></div><p>1.8小时玩到12关没有卡死闪退过，试玩版的一些如多段攻击的音效、敌回合不能回溯读档的问题也有修改，价格也算合理范围，好评（评价里有个1.2小时说通关卡死界面的什么成分？）</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 3</span></div><p>事實證明，捱夜係值得嘅，9號晚都未有消息，等到12點後一睇，卒之上架啦 ^_^
+As my saying goes, where there is a night owl, there is a Purchasing Opportunity for "The Legend of Fancy Realm" Still no news on the evening of the 9th, but after waiting past midnight — it finally went live! ^_^
+
+作為侏羅紀時期就開始鍾意《幻世錄》嘅001號fans，梗係要支持一下奧汀啦！
+As the No. 001 fan who is a die-hard fan since the Jurassic period, of course I have to support Odin (Userjoy)!
+
+奧汀閣下，乜嘢《幻世錄》2代、《超時空英雄傳說》、《幻想紀元》、《異域狂想曲》、《墮落天使》……一齊上啦，你肯上我就肯買。
+Odin (Userjoy) Sama, please relaunch "The Legend of Fancy Realm 2", "Super series", "Fancy Centur", "‌The Fool Plate", "The Fallen Angel"... Come on, your promise, my purchasing without hesitation.
+
+順求官方 [h1]粵語配音及主題曲 [/h1]，感謝！
+Requesting official  [h1]Cantonese Dubbing and a Cantonese Theme Song[/h1], thank you very much!
+
+運行遊戲後，可以揀「經典版/繁中」、「經典版/簡中」或「重製版」。
+After launching the game, you can choose between "Classic Edition / Traditional Chinese", "Classic Edition / Simplified Chinese" or "Remake Edition".
+
+「經典版」版本號係1.06，「簡中」冇寰宇之星提示，仲係經典「磨擊力」:D。
+The version of "Classic Edition" is 1.06, with no "Unistar" prompt in the "Simplified Chinese" version. "Maggie Power", the classic mistranslation as usual :D.
+
+可以按 Alt+Enter 切換全屏或窗口，遊戲識自動保存全屏設定。
+You can toggle between fullscreen and windowed mode by pressing Alt+Enter, and the game will automatically save the fullscreen settings.
+
+再來睇重製版
+Let's take another look at the Remake.
+
+比試玩版改進咗好多，譬如唔會扣少少血就換成嘔血想死咁款。
+The demo version has been improved a lot, such as losing a little HP no longer triggers the vomiting blood like dying
+
+「音樂」吸取咗玩家意見，可以按個人喜好揀「經典版」或「重製版」。
+The "Music" feature incorporates player feedback, allowing users to choose between the "Classic Edition" or the "Remake Edition" based on personal preferences.
+
+一揀「經典版音樂」，感覺返晒來啦！
+Select the "Classic Edition Music" and feel like you're back in the old days!
+
+「回憶錄」菜單可以睇CG、對白同動畫。
+The "Memories" menu allows you to watch CG, Dialogue, and Movies.
+
+「創意工坊」超級強大，奧汀超級大方，抵讚！
+Workshop is super powerful, and Odin (Userjoy) is incredibly generous — well done!
+
+可以導出遊戲文本及配音劇本，
+You can export Localization texts and Voice recording lists.
+
+可以修改圖片、音樂、配音、文本、字體、裝備（含數值）
+You can modify Appearance, Music &amp; SFX, Voice, Localization, Fonts, and Equipment (including stats).
+
+欲知詳情如何，且聽下回分解……
+For more details, stay tuned for the next installment...</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.2 小時</span></div><p>美术风格略手游，但只要琥的转职头像别像原版那么抽象就保持好评
+台配国语亲切，千禧年前后电视上全是这个味
+噩梦难度比原版开局简单，奖励目标比较折腾人
+----------------------------------------------------------------
+我错了，一周目噩梦难度不是人玩的，动态等级太吓人，仅仅是开局简单
+巢窟见汉克斯都难，俩山贼冲上来各抡一斧头雷就剩血皮了</p></div></div></div></details><details class="grp"><summary><span class="gname">購買意願</span><span class="gbar"><span class="s-pos" style="width:15.91%"></span><span class="s-neg" style="width:0.00%"></span></span><span class="gnum">評論 <b>7</b><span class="mut">（好 7／負 0）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 2.9 小時</span><span>有用 2</span></div><p>這次重製版有很多細節增加,變得更符合現代高品質遊戲的要求,音樂也有新增好聽的,像緹娜第三關就很好聽,有需要也可以調回去原版的音樂,老玩家都必買啦. 這篇是我詳記重製版的優點的文章:https://forum.gamer.com.tw/C.php?bsn=3490&amp;snA=358&amp;tnum=1          
+歡迎大家一起來討論幻世錄!</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span></div><p>纯粹为情怀买单，欠你一个20年前的licence fee。传统版音乐响起的时候，的确很有共鸣。这个游戏都不需要写攻略，网上找找以前的还能用，呵呵。制作组实在太不走心了，被骂也是理所应当，中文配音都是什么娘娘腔，想切换配音还要把语言也换了。。。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.8 小時</span></div><p>童年回忆！！！愿意为童年买单！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.2 小時</span></div><p>童年的经典回忆，抛开为情怀买单，也还是因为这个游戏值得买。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.1 小時</span><span>有用 1</span></div><p>为了情怀必须买单</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 209</span></div><p>唉。。。怎么说呢，一言难尽。。我Steam虽然买了很多游戏，也玩的很多，我甚至干了游戏行业快10年，平时缺不怎么发表评论，这次破天荒想多说几句。。
+
+当年幻视录我玩时候，还是很多很多年前上小学，一开始用光盘，但是不会安装，就每次都是光盘启动，那个HSL的图标，但是由于是光盘启动的，所以每次都没法存档，那个年纪的我又不理解，于是每次只能玩前两关，玩一会吃饭就关了，再开又是前两关，就这么打了好久，但是真的乐此不彼。
+
+直到后来，会安装和存档了，就一点点打通，看着游戏杂志里，一点点看攻略，加-pos，找隐藏宝物坐标，很喜欢各种反派，傲、席德尔，那时候觉得这些名字酷酷的。说老实话，幻视录和三国英杰传真的是我SLG的启蒙导师，我错过了超时空英雄传说，但是这两个游戏我是真的爱，不是喜欢，是爱。以至于幻视录2我玩的都没啥感觉，觉得差点意思。
+
+今天本来想睡了，看到邮件里说重制版上线，立刻打开电脑，购买，进游戏。。但是这个美术，看着怪怪的，知道看到AI提示，才意识到这个游戏现在画风是真的一眼AI，音乐也不对劲，于是打开经典版音乐选项，瞬间舒服了，回到那个将近30年前的小时候，回到自己最爱的游戏世界。
+
+我不知道有多少人记得宇俊奥汀这个公司，他出了很多游戏，里面都有个神秘男子，会卖很多厉害的东西，但是过时不候。他们还在很多年前出了一款游戏叫做堕落天使，我得印象非常深，现在还有光盘，是真的很好玩很好玩，很早的回合制。也希望能出个这个重置版就好了。
+
+碎碎念念了这么多，可能根本没人看得懂，也没有人玩过这些快30年的游戏了，真是大叔的碎碎念了。。我看着第一个差评，说现在做了一款连页游质量都不如的游戏，我说实话心里很复杂，我清楚的知道，买这个游戏，纯粹是为了童年买单，我也知道那几个好评，可能刚买了游戏5分钟，就和我一样，为了情怀先打了好评再说，但是游戏品质真的，一言难尽，如果没玩过1的人，尤其是没在我们这个年纪，被幻视录、三国英杰传、KKND、超时空英雄传说、三国志4，大富翁，这些游戏在童年抱过的人，我不建议你们买。你们可以去买鬼武者，或者影之灵刃，或者33远征队，都非常好玩也好看。
+
+但是，如果是和我一样经历过那个年代的，宇峻奥汀，哦现在你叫USERJOY。。我就告诉你一句话，就你这些快30年的游戏重置版，哪怕用了一万个AI的美术，哪怕改的面目全非，哪怕偷工减料过来圈我钱。就冲你当年，让一个10岁的孩子，一整个暑假，每天用光盘启动，开开心心的打开HSL的图标，笑着期待着看着雷欧纳德，无数次。
+
+就冲这个，你的游戏再垃圾，你出一个，老子就无脑入一个，你信吗？？</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.6 小時</span><span>有用 1</span></div><p>实话实说  定价不便宜  而且还没玩不好评  ，但是为了幻世录2的重置版也能上+情怀买单果断冲了！有良心就快上幻2重置版啊喂！</p></div></div></div></details><details class="grp"><summary><span class="gname">AI 素材 / AI 味</span><span class="gbar"><span class="s-pos" style="width:9.09%"></span><span class="s-neg" style="width:0.00%"></span></span><span class="gnum">評論 <b>4</b><span class="mut">（好 4／負 0）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>英文</span><span>2026-09-10</span><span>遊玩 2.1 小時</span><span>有用 2</span></div><p>AI立绘确实有些偷懒，配音也让人出戏（酒馆里那只一口又绵又软的台湾腔的狼士兵说的就是你）。不过战旗游戏谁看这个啊，关了语音冲就完事了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.9 小時</span><span>有用 2</span></div><p>重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2
+加个开关能关闭这尴尬的AI配音
+加个开关能关闭这尴尬的AI配音
+加个开关能关闭这尴尬的AI配音</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.8 小時</span><span>有用 3</span></div><p>之前只知道重制没太关注更新的新闻，没想到这次重制版80块还直接带原版确实意外，而且提供了mod工具将来能拓展可玩性，重制版音乐和原版能随意切换很贴心，好评
+缺点么就是ai立绘真的难看，跟原版都不是一个次元的，花那钱还不如给钱找个美术生按原版重新手画几张，然后就是有点小瑕疵可以优化下，一个是手柄不支持游戏里改确定取消按键，还有个就是原版明明没调动多少cpu资源，最多2个百分比，但是风扇直接1500多呼呼转，应该也可以优化下吧，重制版没有这种情况</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.9 小時</span><span>有用 2</span></div><p>虽然AI味道比较重，，但也算是童年的回忆。而且游戏进行了现代化翻新</p></div></div></div></details><details class="grp"><summary><span class="gname">UI / 介面</span><span class="gbar"><span class="s-pos" style="width:4.55%"></span><span class="s-neg" style="width:4.55%"></span></span><span class="gnum">評論 <b>4</b><span class="mut">（好 2／負 2）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.7 小時</span></div><p>战略类游戏主要考察战略部署，等级不应该是第一位的，而这游戏不练级根本不可能过噩梦，这就没啥意义了。还有些手柄适配的小问题，UI不便捷，读取和存档bug等等，整体属于二点五流水准。</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.1 小時</span><span>有用 3</span></div><p>我严重怀疑游戏制作者没玩过游戏啊，为什么游戏通关了一直卡界面啊，我真服了，能不能把游戏做完在拿出来卖？这游戏给我的感觉就是路边一条无人在意？内部居然连个测试的都没有，我的天啊！我只能说一周之内不把bug全部修好直接退款。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.5 小時</span></div><p>本来想打差评的还是算了，价格合适，比三国群英传8至少好得多毕竟底子还在，有原版可玩不错。卡牌系统和选择难度有点鸡肋，纯战棋游戏就该硬核强迫玩家难度要有。画面一股手游味，这毕竟是电脑或主机游戏，廉价感甚至比一些手游还差，画风比原版差远了，各种纸片图一动一动的看着也增加了辣眼度，要是画面做成3D模型更好。不管抄不抄袭UI你至少要看着按键明了呀，装备图标是非常非常不协调的难看，还不让玩家方便操作，非常辣眼睛，可以用手柄是不错，不过提示因该更多。买卖装备不知道是不是有BUG按下确定经常就直接翻到仓库了，退出商店重进又好了。系统因该改进地形站位加减能力机制，不过对于你们目前不适合做游戏的团队有点艰难。
+新作就别出了，你们是真不适合做游戏，游戏最重要的还是玩法和数据的精致度（这可以参考一些日系RPG），下次重制一下三国群英传7吧，顺便修改一下平衡，可以2D动漫风，但画面别再这样看着像纸片了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.8 小時</span><span>有用 1</span></div><p>1.8小时玩到12关没有卡死闪退过，试玩版的一些如多段攻击的音效、敌回合不能回溯读档的问题也有修改，价格也算合理范围，好评（评价里有个1.2小时说通关卡死界面的什么成分？）</p></div></div></div></details><details class="grp"><summary><span class="gname">卡牌 / 打牌</span><span class="gbar"><span class="s-pos" style="width:4.55%"></span><span class="s-neg" style="width:0.00%"></span></span><span class="gnum">評論 <b>2</b><span class="mut">（好 2／負 0）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>英文</span><span>2026-09-10</span><span>遊玩 1.8 小時</span><span>有用 1</span></div><p>传统硬核战棋游戏。打牌的小游戏很有意思。推荐</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.5 小時</span></div><p>本来想打差评的还是算了，价格合适，比三国群英传8至少好得多毕竟底子还在，有原版可玩不错。卡牌系统和选择难度有点鸡肋，纯战棋游戏就该硬核强迫玩家难度要有。画面一股手游味，这毕竟是电脑或主机游戏，廉价感甚至比一些手游还差，画风比原版差远了，各种纸片图一动一动的看着也增加了辣眼度，要是画面做成3D模型更好。不管抄不抄袭UI你至少要看着按键明了呀，装备图标是非常非常不协调的难看，还不让玩家方便操作，非常辣眼睛，可以用手柄是不错，不过提示因该更多。买卖装备不知道是不是有BUG按下确定经常就直接翻到仓库了，退出商店重进又好了。系统因该改进地形站位加减能力机制，不过对于你们目前不适合做游戏的团队有点艰难。
+新作就别出了，你们是真不适合做游戏，游戏最重要的还是玩法和数据的精致度（这可以参考一些日系RPG），下次重制一下三国群英传7吧，顺便修改一下平衡，可以2D动漫风，但画面别再这样看着像纸片了。</p></div></div></div></details><details class="grp"><summary><span class="gname">多結局 / IF 劇情</span><span class="gbar"><span class="s-pos" style="width:4.55%"></span><span class="s-neg" style="width:0.00%"></span></span><span class="gnum">評論 <b>2</b><span class="mut">（好 2／負 0）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 6.1 小時</span></div><p>認真說，雖然我也對人物立繪有點感冒。倒不是因為 AI ，是總覺得重製版的人物跟以前印象中的人物有著微妙的落差，雷長得太年輕活潑，公主長得太老成。但扣掉這點，以重製版來說我真覺得沒甚麼好挑剔的。
+
+舊的經典版也附上了、難度調整、快轉、回手等方便功能也都有了，語音以台灣配音員陣容來說也夠豪華了，正式版還可以切舊版的音樂。聽說確定其他配角也有三轉，我還沒玩到結局，不知道這次新增的結局如何。
+
+總之我個人是滿意的。
+
+唯一感慨的是以前那種變態難度可以認真玩到全破，現在卻不自覺都直接選最低難度只想爽打，真是老了啊。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.5 小時</span></div><p>为了雷总必须入,希望能有个好结局,游戏做得比预想的好,很好玩</p></div></div></div></details><details class="grp"><summary><span class="gname">本地化 / 字型顯示</span><span class="gbar"><span class="s-pos" style="width:4.55%"></span><span class="s-neg" style="width:0.00%"></span></span><span class="gnum">評論 <b>2</b><span class="mut">（好 2／負 0）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.0 小時</span><span>有用 3</span></div><p>事實證明，捱夜係值得嘅，9號晚都未有消息，等到12點後一睇，卒之上架啦 ^_^
+As my saying goes, where there is a night owl, there is a Purchasing Opportunity for "The Legend of Fancy Realm" Still no news on the evening of the 9th, but after waiting past midnight — it finally went live! ^_^
+
+作為侏羅紀時期就開始鍾意《幻世錄》嘅001號fans，梗係要支持一下奧汀啦！
+As the No. 001 fan who is a die-hard fan since the Jurassic period, of course I have to support Odin (Userjoy)!
+
+奧汀閣下，乜嘢《幻世錄》2代、《超時空英雄傳說》、《幻想紀元》、《異域狂想曲》、《墮落天使》……一齊上啦，你肯上我就肯買。
+Odin (Userjoy) Sama, please relaunch "The Legend of Fancy Realm 2", "Super series", "Fancy Centur", "‌The Fool Plate", "The Fallen Angel"... Come on, your promise, my purchasing without hesitation.
+
+順求官方 [h1]粵語配音及主題曲 [/h1]，感謝！
+Requesting official  [h1]Cantonese Dubbing and a Cantonese Theme Song[/h1], thank you very much!
+
+運行遊戲後，可以揀「經典版/繁中」、「經典版/簡中」或「重製版」。
+After launching the game, you can choose between "Classic Edition / Traditional Chinese", "Classic Edition / Simplified Chinese" or "Remake Edition".
+
+「經典版」版本號係1.06，「簡中」冇寰宇之星提示，仲係經典「磨擊力」:D。
+The version of "Classic Edition" is 1.06, with no "Unistar" prompt in the "Simplified Chinese" version. "Maggie Power", the classic mistranslation as usual :D.
+
+可以按 Alt+Enter 切換全屏或窗口，遊戲識自動保存全屏設定。
+You can toggle between fullscreen and windowed mode by pressing Alt+Enter, and the game will automatically save the fullscreen settings.
+
+再來睇重製版
+Let's take another look at the Remake.
+
+比試玩版改進咗好多，譬如唔會扣少少血就換成嘔血想死咁款。
+The demo version has been improved a lot, such as losing a little HP no longer triggers the vomiting blood like dying
+
+「音樂」吸取咗玩家意見，可以按個人喜好揀「經典版」或「重製版」。
+The "Music" feature incorporates player feedback, allowing users to choose between the "Classic Edition" or the "Remake Edition" based on personal preferences.
+
+一揀「經典版音樂」，感覺返晒來啦！
+Select the "Classic Edition Music" and feel like you're back in the old days!
+
+「回憶錄」菜單可以睇CG、對白同動畫。
+The "Memories" menu allows you to watch CG, Dialogue, and Movies.
+
+「創意工坊」超級強大，奧汀超級大方，抵讚！
+Workshop is super powerful, and Odin (Userjoy) is incredibly generous — well done!
+
+可以導出遊戲文本及配音劇本，
+You can export Localization texts and Voice recording lists.
+
+可以修改圖片、音樂、配音、文本、字體、裝備（含數值）
+You can modify Appearance, Music &amp; SFX, Voice, Localization, Fonts, and Equipment (including stats).
+
+欲知詳情如何，且聽下回分解……
+For more details, stay tuned for the next installment...</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span><span>有用 1</span></div><p>首发才81块，还附带简体中文和繁体中文两个版本，不说给情怀补票，就说这价格给2个游戏，还要啥自行车？这可是当年战棋游戏类的超经典作品，当年的国产之光，也是我买的第一款正版游戏（当年68块还是98块买的，那时候家里连电脑都没有，去新华书店买书时看到这个游戏就买下了，因为买游戏的时候暂时还没电脑，只能放VCD机子里面听听BGM，直到2年后小升初家里给买了电脑才玩上，印象深刻），无脑入且必须好评！</p></div></div></div></details><details class="grp"><summary><span class="gname">命中率 / MISS</span><span class="gbar"><span class="s-pos" style="width:0.00%"></span><span class="s-neg" style="width:2.27%"></span></span><span class="gnum">評論 <b>1</b><span class="mut">（好 0／負 1）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.1 小時</span><span>有用 1</span></div><p>制作组，你们窗口化和全屏有什么区别？真想把两边的黑边甩你们脸上，窗口化不能改分辨率和全屏有什么区别？还有那个比人还大的鼠标，就不能加个模型可以换？有必要这么大吗？上Buff可能miss、伤害性技能和魔法容易闪退</p></div></div></div></details><details class="grp"><summary><span class="gname">退款風險</span><span class="gbar"><span class="s-pos" style="width:0.00%"></span><span class="s-neg" style="width:2.27%"></span></span><span class="gnum">評論 <b>1</b><span class="mut">（好 0／負 1）</span></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.1 小時</span><span>有用 3</span></div><p>我严重怀疑游戏制作者没玩过游戏啊，为什么游戏通关了一直卡界面啊，我真服了，能不能把游戏做完在拿出来卖？这游戏给我的感觉就是路边一条无人在意？内部居然连个测试的都没有，我的天啊！我只能说一周之内不把bug全部修好直接退款。</p></div></div></div></details><details class="grp"><summary><span class="gname">其他 / 未分類</span><span class="gbar"><span class="s-pos" style="width:86.36%"></span><span class="s-neg" style="width:13.64%"></span></span><span class="gnum">評論 <b>44</b><span class="mut">（好 38／負 6）</span>　討論串 <b>6</b></span></summary><div class="gbody"><div class=gsec><div class=gsech>相關討論串</div><ol class=threads><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873504423/" target="_blank" rel="noopener">Looks Like it's 90% AI Made</a><span class="mut"> · JDPUK · 17 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873523102/" target="_blank" rel="noopener">How long is the game?</a><span class="mut"> · Urthor1996 · 4 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873525258/" target="_blank" rel="noopener">打不開遊戲</a><span class="mut"> · SHIDAWATSON · 2 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873563448/" target="_blank" rel="noopener">物品栏满了是不是新捡到的物品会自动消失？</a><span class="mut"> · craigngu · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873524988/" target="_blank" rel="noopener">给年幼的自己补张票</a><span class="mut"> · 棺材上的钉子 · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873530173/" target="_blank" rel="noopener">可加入角色？</a><span class="mut"> · KAiXA · 0 回覆</span></li></ol></div><div class=gsec><div class=gsech>相關評論原文</div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.6 小時</span></div><p>2026年了，你的重置只是重置了一下贴图？只能说确实“原汁原味”</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.6 小時</span><span>有用 1</span></div><p>敌人一放技能就崩溃 怎么玩 才第二章 都崩溃4 5次了</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.2 小時</span></div><p>铁壁之舞成就完成不了，请尽快修复</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 6.5 小時</span><span>有用 4</span></div><p>快30年了，利魯瑪山地依然是本游戏最恶意，最劝退，最恶心，最让人想删游戏的地图。
+——
+打过利魯瑪山地后个人认为这是个半成品游戏，不推荐。
+打完大波敌人后，剩下地图最右侧4个翼人弓箭手永远待机，必须操纵雷特过去它们才会移动，这就导致了最后将近20回合队伍其余人一直待机看着雷特表演，雷特一个人或者单挑，或者飞过去慢慢把4个弓箭手引过来，极端枯燥乏味，中间都快睡着了。
+无法想象这么无聊乏味劝退的设定是吃了多少斤不可描述之物才想出来的。</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.4 小時</span></div><p>卡死那是家常便饭，法兰克哪来的必杀，怒气不掉，无限放必杀。</p></div><div class="rev"><div class="meta"><span class="pill dn">👎 負評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.7 小時</span><span>有用 4</span></div><p>都浪费原画师的画了，2026年了，做的还不如一个网页游戏有质量，太说不过去了。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.7 小時</span></div><p>记得当年网吧玩通关，现在再次回味一下</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.9 小時</span><span>有用 1</span></div><p>这个必须支持一波，一直都很喜欢，希望重置第二部</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.0 小時</span></div><p>很好很强大</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.8 小時</span></div><p>能不能加个 切换别的窗口时，后台继续播放游戏声音的功能啊，每次切别的一下，这边在进行的声音就听不到了</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.1 小時</span><span>有用 1</span></div><p>重置版这样也能接受吧，爷回青滤镜</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.5 小時</span><span>有用 1</span></div><p>原作比我都大，我都成小登了</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 6.9 小時</span></div><p>把以前沒有破關的遊戲再拿來玩也不錯，有感覺變簡單很多</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.8 小時</span></div><p>就是那个味</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 8.6 小時</span></div><p>第一次玩，感觉很有意思</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.0 小時</span></div><p>先给个好评把</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.1 小時</span></div><p>重制版 送原版给个好评</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 5.7 小時</span></div><p>第一时间买下</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 12.0 小時</span><span>有用 1</span></div><p>是一款精神時光屋</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.1 小時</span></div><p>挺不错的</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.9 小時</span></div><p>第二关过了之后直接卡死是怎么回事，重装兵死了也卡死？？？！！！这加速有点问题。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.9 小時</span><span>有用 2</span></div><p>重制新绝代双骄3 求求了 求求了 求求了</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.0 小時</span></div><p>水龙波没有龙，我去，实在忍不了</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.9 小時</span></div><p>经典游戏的重制！！！
+在原作的基础上进行了现代改进，即保留了原来的感觉又有一定的革新。
+总之是一次很好的重制，期待未来有更多的经典游戏能够以高质量重制！！！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.2 小時</span></div><p>非常喜欢。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 4.0 小時</span></div><p>可以 good</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.6 小時</span><span>有用 1</span></div><p>刚到废都就不能触发剧情，赶紧修复
+</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.7 小時</span><span>有用 1</span></div><p>老秘籍还能用，实测</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.5 小時</span></div><p>原汁原味的基础上增加了不少现代化设定，点赞，不过敌人增援等级设定有待商榷，让练级几乎成了副作用啊。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.7 小時</span></div><p>不错不错，还原了原版那个味儿，而且有创新和新玩法的加入，很好很好</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.5 小時</span></div><p>每局游戏有没有回合数最大限制呀？第三关我缇娜110回合都刷到7级了，这在原版是不可能的，如果没有回合数那我可以直接把一转之前的缇娜刷到满呀</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.5 小時</span><span>有用 1</span></div><p>这算是爷青回了吧 支持一下</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span></div><p>虽然看出来是小成本重制，通过玩试玩版也比较符合预期（本身预期也不高），希望国产游戏不管是重制还是经典复刻能越来越好，越来越多样百花齐放。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.1 小時</span><span>有用 2</span></div><p>这就是我少年时期的白月光。就算今天端上来一盘屎，我也会微笑着说好吃</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 1.9 小時</span></div><p>有种把老游戏都重制 你出一个我买一个</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>繁中</span><span>2026-09-10</span><span>遊玩 1.6 小時</span><span>有用 5</span></div><p>很不錯，完成品比想像中好。
+有台配有工作坊，價錢又合理，
+覺得很有誠意就買了。
+印象中還有一款"阿瑪迪斯戰記"好像是漢堂的，
+希望他們也來重製或出新作。</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.3 小時</span></div><p>啥也不说了，收入原版还简繁都有，就值得一个好评了，这种重制版游戏多来几个</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.8 小時</span></div><p>很经典</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 6.7 小時</span></div><p>挺好玩的！</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 4.8 小時</span><span>有用 2</span></div><p>为儿时补个票吧 初中的时候玩的藏经阁盗版</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 3.3 小時</span><span>有用 9</span></div><p>0点开玩  玩到天亮，快到那可那鲁了，感觉还不错，就是遇到了2个问题我想反馈一下。
+1.商店买武器防具穿戴这种操作不如老版本的便捷，尤其是穿戴饰品的时候还要选择1号位2号位，老版本是直接拖装备到对应位置就替换上了。
+2.汉克斯的神技金之手，偷取道具成功率有点太低了，感觉有20%到25%，没偷到我就S/L大法，重复4次左右才能偷到，这有点影响体验了，主要是废都曼多利亚那关 挑战任务需要尝试偷取逆十字（偷取失败了也能完成任务）。
+等后续玩了再来补充</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 2.0 小時</span><span>有用 3</span></div><p>为什么有些人连81块都觉得不值呢，哪怕不算重制版，一起打包的原版就值得81。说来哪怕重制的再差，依原版的底子再玩重制版还是好玩的。老式rpg味道浓厚，刚刚第三关蹲坑蹲了94回合，就玩的很舒服。
+好评支持了，希望把老国产都移植或者打包重制，出一部买一部</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.5 小時</span><span>有用 58</span></div><p>致那个28年前的暑假，在电脑前被虐到崩溃的少年，第一次玩幻世录时才11岁，现在已经39了，回不去了...</p></div><div class="rev"><div class="meta"><span class="pill up">👍 好評</span><span>簡中</span><span>2026-09-10</span><span>遊玩 0.4 小時</span></div><p>第二关 打到最后 会卡死 只有我这样吗？</p></div></div></div></details>
+  <div class="legend"><span><i style="background:var(--pos)"></i>好評中提及</span>
+    <span><i style="background:var(--neg)"></i>負評中提及</span></div>
+</section>
+
+<section class="card"><h2>討論版熱門串（依回覆數）</h2><ol class="threads"><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873504423/" target="_blank" rel="noopener">Looks Like it's 90% AI Made</a><span class="mut"> · JDPUK · 17 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873523102/" target="_blank" rel="noopener">How long is the game?</a><span class="mut"> · Urthor1996 · 4 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873525258/" target="_blank" rel="noopener">打不開遊戲</a><span class="mut"> · SHIDAWATSON · 2 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873507418/" target="_blank" rel="noopener">Bug挺恶心的</a><span class="mut"> · 小火GZ · 1 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873531359/" target="_blank" rel="noopener">無法進入遊戲,有BUG??</a><span class="mut"> · XZERO · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873527228/" target="_blank" rel="noopener">闪退BUG</a><span class="mut"> · 三分寒雨 · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873536890/" target="_blank" rel="noopener">正式版继承不了试玩版的存档</a><span class="mut"> · 17539893 · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873532176/" target="_blank" rel="noopener">第三关成就bug</a><span class="mut"> · julianspand · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873563448/" target="_blank" rel="noopener">物品栏满了是不是新捡到的物品会自动消失？</a><span class="mut"> · craigngu · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873524988/" target="_blank" rel="noopener">给年幼的自己补张票</a><span class="mut"> · 棺材上的钉子 · 0 回覆</span></li><li><a href="https://steamcommunity.com/app/4030150/discussions/0/562541634873530173/" target="_blank" rel="noopener">可加入角色？</a><span class="mut"> · KAiXA · 0 回覆</span></li></ol></section>
+
+<section class="card">
+  <h2>評論瀏覽器</h2>
+  <div class="filters">
+    <select id="f-lang"><option value="">全部語言</option><option value="english">英文</option><option value="koreana">韓文</option><option value="schinese">簡中</option><option value="tchinese">繁中</option></select>
+    <select id="f-up"><option value="">好評+負評</option><option value="1">只看好評</option>
+      <option value="0">只看負評</option></select>
+    <select id="f-th"><option value="">全部議題</option><option value="AI 素材 / AI 味">AI 素材 / AI 味</option><option value="配音 / 語音">配音 / 語音</option><option value="命中率 / MISS">命中率 / MISS</option><option value="數值 / 平衡">數值 / 平衡</option><option value="UI / 介面">UI / 介面</option><option value="BGM / 音樂">BGM / 音樂</option><option value="畫面 / 美術">畫面 / 美術</option><option value="情懷 / 補票">情懷 / 補票</option><option value="續作 / 二代">續作 / 二代</option><option value="卡牌 / 打牌">卡牌 / 打牌</option><option value="BUG / 當機">BUG / 當機</option><option value="多結局 / IF 劇情">多結局 / IF 劇情</option><option value="本地化 / 字型顯示">本地化 / 字型顯示</option><option value="退款風險">退款風險</option><option value="發售日 / 價格">發售日 / 價格</option><option value="購買意願">購買意願</option></select>
+    <input id="f-q" type="search" placeholder="全文搜尋…" style="flex:1;min-width:160px">
+    <select id="f-sort"><option value="new">最新優先</option><option value="vote">最多人覺得有用</option>
+      <option value="long">最長優先</option></select>
+  </div>
+  <div id="count" class="mut" style="font-size:12.5px"></div>
+  <div id="list"></div>
+</section>
+
+<div class="foot">好評率＝Steam 官方 query_summary；議題統計為關鍵詞比對，僅供快速定位，細節請點開原文確認。</div>
+</div>
+<script>
+const DATA = [{"id": "234900625", "lang": "schinese", "up": true, "ts": 1789032912, "pt": 248, "vu": 0, "txt": "不仅是补票，有一些创新还是不错的", "th": ["情懷 / 補票"]}, {"id": "234900491", "lang": "schinese", "up": true, "ts": 1789032690, "pt": 29, "vu": 0, "txt": "这是第二次买幻世录了，支持一份希望能继续出二代，让我二代也再买一次。当然最好能三代也续写下去", "th": ["續作 / 二代"]}, {"id": "234900457", "lang": "schinese", "up": true, "ts": 1789032642, "pt": 99, "vu": 0, "txt": "童年最喜欢的战旗之一，现在在玩经典版回忆一遍，打完再玩重制版，重置试玩了一会最高难度，敌对血是真的厚，老版的气刃斩都是秒人的，重制版气刃斩伤害只能打半血，其他队友的技能伤害也比气刃斩高，气刃斩伤害是不是下调了，还有挑战任务，玩起来比老版难度高多了", "th": ["數值 / 平衡", "情懷 / 補票"]}, {"id": "234900270", "lang": "schinese", "up": true, "ts": 1789032335, "pt": 283, "vu": 0, "txt": "记得当年网吧玩通关，现在再次回味一下", "th": []}, {"id": "234900172", "lang": "tchinese", "up": true, "ts": 1789032160, "pt": 114, "vu": 0, "txt": "跟舊版比起來 重製版多了很多適合現在玩家人性化的設計\n雖然畫面AI感過度強烈 但這樣的收費 又是國產單機遊戲 怎麼能夠不支持呢", "th": ["畫面 / 美術"]}, {"id": "234900148", "lang": "schinese", "up": true, "ts": 1789032126, "pt": 43, "vu": 0, "txt": "DNA觉醒、梦回初中时代，必须狠狠的给个赞，把当年那些战棋经典都端上来吧，天地劫、致命武力、炎龙，我愿意出3A的价格，而且可以买期货，上链接就行，来者不拒", "th": ["發售日 / 價格"]}, {"id": "234899837", "lang": "schinese", "up": false, "ts": 1789031603, "pt": 37, "vu": 0, "txt": "2026年了，你的重置只是重置了一下贴图？只能说确实“原汁原味”", "th": []}, {"id": "234899399", "lang": "schinese", "up": true, "ts": 1789030866, "pt": 264, "vu": 1, "txt": "40岁老登为当年10多岁的自己补上一份回忆", "th": ["情懷 / 補票"]}, {"id": "234899284", "lang": "schinese", "up": true, "ts": 1789030676, "pt": 173, "vu": 1, "txt": "这个必须支持一波，一直都很喜欢，希望重置第二部", "th": []}, {"id": "234899082", "lang": "schinese", "up": true, "ts": 1789030298, "pt": 180, "vu": 0, "txt": "很好很强大", "th": []}, {"id": "234898535", "lang": "tchinese", "up": true, "ts": 1789029495, "pt": 364, "vu": 0, "txt": "認真說，雖然我也對人物立繪有點感冒。倒不是因為 AI ，是總覺得重製版的人物跟以前印象中的人物有著微妙的落差，雷長得太年輕活潑，公主長得太老成。但扣掉這點，以重製版來說我真覺得沒甚麼好挑剔的。\n\n舊的經典版也附上了、難度調整、快轉、回手等方便功能也都有了，語音以台灣配音員陣容來說也夠豪華了，正式版還可以切舊版的音樂。聽說確定其他配角也有三轉，我還沒玩到結局，不知道這次新增的結局如何。\n\n總之我個人是滿意的。\n\n唯一感慨的是以前那種變態難度可以認真玩到全破，現在卻不自覺都直接選最低難度只想爽打，真是老了啊。", "th": ["配音 / 語音", "數值 / 平衡", "BGM / 音樂", "畫面 / 美術", "多結局 / IF 劇情"]}, {"id": "234898282", "lang": "schinese", "up": true, "ts": 1789029045, "pt": 50, "vu": 0, "txt": "能不能加个 切换别的窗口时，后台继续播放游戏声音的功能啊，每次切别的一下，这边在进行的声音就听不到了", "th": []}, {"id": "234898182", "lang": "tchinese", "up": true, "ts": 1789028865, "pt": 18, "vu": 0, "txt": "原版真的可以說是神作中的神作。\n當年的畫面、音樂、劇情和戰棋玩法，那種味道依然無可取代。\n重製版最重要的，不是畫面有多漂亮，而是能不能保留原版最迷人的靈魂。\n畢竟，《幻世錄》這三個字，對很多老玩家來說，本身就是一段回憶。", "th": ["BGM / 音樂", "畫面 / 美術", "情懷 / 補票"]}, {"id": "234897843", "lang": "tchinese", "up": true, "ts": 1789028276, "pt": 95, "vu": 0, "txt": "新的人物造型，安裝人物語音，過場動態人物表演，操作感的流暢與直覺性，劇情的補強和職業的更新，可以立刻調整的難度與快速的讀檔速度，種種細節都可以看得出製作組的用心，這才是真正好的重製。必須給一個讚!!!\n不得不在這裡臭一下暗恥，連重製版都做不好，只會巧立名目反覆收割粉絲的情懷，壓榨粉絲的荷包，說的遊戲規劃跟屁一樣，推出的更新內容跟便秘一般，拉坨屎都不乾脆，今天有搞了一個威力加強傳承版上市。\n對比本作的重製版，傳承根本如同兒戲。我話就放在這邊，要是暗榮你這次沒搞威加強傳承版之威力再加強版，我790元就花下去，下一代的信長野望，我也絕對買!", "th": ["配音 / 語音", "數值 / 平衡", "情懷 / 補票"]}, {"id": "234897535", "lang": "tchinese", "up": true, "ts": 1789027669, "pt": 172, "vu": 2, "txt": "這次重製版有很多細節增加,變得更符合現代高品質遊戲的要求,音樂也有新增好聽的,像緹娜第三關就很好聽,有需要也可以調回去原版的音樂,老玩家都必買啦. 這篇是我詳記重製版的優點的文章:https://forum.gamer.com.tw/C.php?bsn=3490&snA=358&tnum=1          \n歡迎大家一起來討論幻世錄!", "th": ["BGM / 音樂", "購買意願"]}, {"id": "234897520", "lang": "schinese", "up": true, "ts": 1789027637, "pt": 52, "vu": 0, "txt": "好评给可以替换原版音乐和创意工坊", "th": ["BGM / 音樂"]}, {"id": "234897433", "lang": "schinese", "up": true, "ts": 1789027484, "pt": 184, "vu": 1, "txt": "重置版这样也能接受吧，爷回青滤镜", "th": []}, {"id": "234897391", "lang": "schinese", "up": true, "ts": 1789027408, "pt": 91, "vu": 1, "txt": "原作比我都大，我都成小登了", "th": []}, {"id": "234897180", "lang": "schinese", "up": true, "ts": 1789027037, "pt": 196, "vu": 0, "txt": "小時候玩過的，記憶中好像還未通關，電腦就坏了，然後碰上考試，就沒動力重開了。\n一直到二十年多年後的今天，我這次要完成全成就。\n重置版DEMO我玩了覺得很不錯，游戲官方肯聽取玩家意見，\n給予支持這方面還是很給力的，BUG還是得給時間他們慢慢修。\n\n這不是3A大作，有些要求還是得降低一些，這會玩得比較愉快。\n加油吧！", "th": ["BUG / 當機"]}, {"id": "234896937", "lang": "schinese", "up": true, "ts": 1789026593, "pt": 284, "vu": 0, "txt": "补票上车", "th": ["情懷 / 補票"]}, {"id": "234896751", "lang": "tchinese", "up": true, "ts": 1789026210, "pt": 101, "vu": 0, "txt": "夢回小時候~就是要用經典版音樂玩!! \n感謝重制能讓我再次用雷歐納德的視角體驗這段傳奇的冒險~", "th": ["BGM / 音樂"]}, {"id": "234896710", "lang": "tchinese", "up": true, "ts": 1789026125, "pt": 414, "vu": 0, "txt": "把以前沒有破關的遊戲再拿來玩也不錯，有感覺變簡單很多", "th": []}, {"id": "234896693", "lang": "tchinese", "up": true, "ts": 1789026102, "pt": 188, "vu": 0, "txt": "國中的回憶!!", "th": ["情懷 / 補票"]}, {"id": "234896605", "lang": "koreana", "up": true, "ts": 1789025944, "pt": 77, "vu": 2, "txt": "ai일러가 다소 거슬리고\n중국어 음성싫은분은 안하시는게...\n\n움직임스킵해도 느린데요. 컨트롤 누르면 대사진행만 2배빠른게 아니고 전투때도 조금 빨라집니다\n그래도 답답할때가 많고,\n 추가 미션인 오딘의 뭐시기는 어디다쓰는지 모르겟는데 스토리난이도 아니면 얻기힘든 부분이많네요.\n 특히 아군 병사 몇명이상 살리라는 미션은 ai가 등신이라 개피여도 쳐박아서 다 뒤져요\n일반 난이도에서도 걔내한테 턴마다 약써주고 그래도안돼면 마법쓰는애 스킬 빗나갈때까지 세로신공 반복해야겨우 가능한정도...\n 인벤토리 보는것도 불친절합니다. 전투 몇번 끝나야 전체맵나오고 \n 웃긴건 전투중 얻은 케릭 인벤 내 아이템은 창고로 안보내면 전투 후에 장착이 안되네요? 이건 뭔지?\n\n비추할정도는 아니니까 추천으로 해놓는데, 복합적 정도인듯합니다.\nRPG누렁이면 그냥저냥 할만하고 아니면 30%이상 할인할때 해보시길 추천합니다.\n", "th": ["配音 / 語音", "畫面 / 美術"]}, {"id": "234896155", "lang": "schinese", "up": true, "ts": 1789025079, "pt": 287, "vu": 0, "txt": "就是那个味", "th": []}, {"id": "234895802", "lang": "schinese", "up": true, "ts": 1789024437, "pt": 283, "vu": 1, "txt": "高清画面，新版音乐听不太习惯但可以自己切换到原版音乐。期待幻世录2重制！", "th": ["BGM / 音樂", "畫面 / 美術", "續作 / 二代"]}, {"id": "234895427", "lang": "schinese", "up": true, "ts": 1789023655, "pt": 6, "vu": 0, "txt": "纯粹为情怀买单，欠你一个20年前的licence fee。传统版音乐响起的时候，的确很有共鸣。这个游戏都不需要写攻略，网上找找以前的还能用，呵呵。制作组实在太不走心了，被骂也是理所应当，中文配音都是什么娘娘腔，想切换配音还要把语言也换了。。。", "th": ["配音 / 語音", "BGM / 音樂", "情懷 / 補票", "購買意願"]}, {"id": "234895395", "lang": "schinese", "up": true, "ts": 1789023580, "pt": 517, "vu": 0, "txt": "第一次玩，感觉很有意思", "th": []}, {"id": "234895193", "lang": "schinese", "up": true, "ts": 1789023228, "pt": 30, "vu": 0, "txt": "不行了，听到女主的配音突然就没绷住，觉得她要变身迪亚布罗了。。", "th": ["配音 / 語音"]}, {"id": "234894691", "lang": "schinese", "up": true, "ts": 1789022273, "pt": 300, "vu": 0, "txt": "先给个好评把", "th": []}, {"id": "234894564", "lang": "schinese", "up": true, "ts": 1789022041, "pt": 66, "vu": 0, "txt": "重制版 送原版给个好评", "th": []}, {"id": "234894442", "lang": "schinese", "up": true, "ts": 1789021790, "pt": 359, "vu": 0, "txt": "这个价格明显是没性价比的，但我愿意买给童年的自己，希望可以玩到幻世录2重置版", "th": ["情懷 / 補票", "續作 / 二代", "發售日 / 價格"]}, {"id": "234894368", "lang": "schinese", "up": true, "ts": 1789021648, "pt": 40, "vu": 0, "txt": "没什么可说的，情怀补票。", "th": ["情懷 / 補票"]}, {"id": "234894030", "lang": "schinese", "up": false, "ts": 1789020932, "pt": 189, "vu": 1, "txt": "制作组，你们窗口化和全屏有什么区别？真想把两边的黑边甩你们脸上，窗口化不能改分辨率和全屏有什么区别？还有那个比人还大的鼠标，就不能加个模型可以换？有必要这么大吗？上Buff可能miss、伤害性技能和魔法容易闪退", "th": ["命中率 / MISS", "BUG / 當機"]}, {"id": "234893872", "lang": "schinese", "up": false, "ts": 1789020629, "pt": 35, "vu": 1, "txt": "敌人一放技能就崩溃 怎么玩 才第二章 都崩溃4 5次了", "th": []}, {"id": "234893747", "lang": "schinese", "up": false, "ts": 1789020392, "pt": 185, "vu": 0, "txt": "我咖喱亮的，放魔法就闪退，这最基本的都没弄好就敢拿出来卖81？要疯阿！！！！", "th": ["BUG / 當機"]}, {"id": "234893669", "lang": "schinese", "up": false, "ts": 1789020268, "pt": 56, "vu": 0, "txt": "纯纯的2杯游戏 情怀也不是这么消费的", "th": ["情懷 / 補票"]}, {"id": "234893481", "lang": "schinese", "up": true, "ts": 1789019935, "pt": 344, "vu": 0, "txt": "第一时间买下", "th": []}, {"id": "234893469", "lang": "schinese", "up": true, "ts": 1789019910, "pt": 166, "vu": 0, "txt": "童年回忆！！！愿意为童年买单！", "th": ["情懷 / 補票", "購買意願"]}, {"id": "234893339", "lang": "tchinese", "up": true, "ts": 1789019680, "pt": 720, "vu": 1, "txt": "是一款精神時光屋", "th": []}, {"id": "234892981", "lang": "schinese", "up": true, "ts": 1789018963, "pt": 45, "vu": 4, "txt": "第一关敌人魔法师一用任何魔法，我就闪退？这个不修完全不能玩", "th": ["BUG / 當機"]}, {"id": "234892646", "lang": "english", "up": true, "ts": 1789018416, "pt": 127, "vu": 2, "txt": "AI立绘确实有些偷懒，配音也让人出戏（酒馆里那只一口又绵又软的台湾腔的狼士兵说的就是你）。不过战旗游戏谁看这个啊，关了语音冲就完事了。", "th": ["AI 素材 / AI 味", "配音 / 語音", "畫面 / 美術"]}, {"id": "234892634", "lang": "schinese", "up": true, "ts": 1789018396, "pt": 59, "vu": 0, "txt": "补个票，30年前唯一玩通关的游戏！玩了前2关，关卡基本没变，立绘怪怪的，唉！不重要了，不能再坐着了，离咕噜还早的很，争取每天推进2关！\n", "th": ["畫面 / 美術"]}, {"id": "234892258", "lang": "schinese", "up": false, "ts": 1789017736, "pt": 342, "vu": 0, "txt": "战略类游戏主要考察战略部署，等级不应该是第一位的，而这游戏不练级根本不可能过噩梦，这就没啥意义了。还有些手柄适配的小问题，UI不便捷，读取和存档bug等等，整体属于二点五流水准。", "th": ["UI / 介面", "BUG / 當機"]}, {"id": "234891596", "lang": "schinese", "up": true, "ts": 1789016578, "pt": 81, "vu": 0, "txt": "反正我没有碰到那些说卡关的问题，目前已经第10章了，也可能是我继承了试玩版存档的关系，总之目前非常满意", "th": ["BUG / 當機", "發售日 / 價格"]}, {"id": "234891211", "lang": "schinese", "up": true, "ts": 1789015936, "pt": 183, "vu": 2, "txt": "无脑入，说情怀就情怀吧，这就是青春啊。", "th": ["情懷 / 補票"]}, {"id": "234891156", "lang": "schinese", "up": true, "ts": 1789015849, "pt": 244, "vu": 0, "txt": "挺不错的", "th": []}, {"id": "234891099", "lang": "schinese", "up": true, "ts": 1789015748, "pt": 234, "vu": 0, "txt": "第二关过了之后直接卡死是怎么回事，重装兵死了也卡死？？？！！！这加速有点问题。", "th": []}, {"id": "234890958", "lang": "schinese", "up": true, "ts": 1789015537, "pt": 35, "vu": 0, "txt": "目前bug好多 动不动就无法过关 而且拿到隐藏奖励无法过 什么都不拿可以正常游戏", "th": ["BUG / 當機"]}, {"id": "234890545", "lang": "schinese", "up": true, "ts": 1789014785, "pt": 111, "vu": 2, "txt": "重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2，重制2\n加个开关能关闭这尴尬的AI配音\n加个开关能关闭这尴尬的AI配音\n加个开关能关闭这尴尬的AI配音", "th": ["AI 素材 / AI 味", "配音 / 語音"]}, {"id": "234890261", "lang": "schinese", "up": true, "ts": 1789014275, "pt": 90, "vu": 0, "txt": "这辈子玩过的第一款单机游戏就是幻世录，为了情怀肯定要买份重制版给个好评", "th": ["情懷 / 補票"]}, {"id": "234889816", "lang": "english", "up": true, "ts": 1789013469, "pt": 109, "vu": 1, "txt": "传统硬核战棋游戏。打牌的小游戏很有意思。推荐", "th": ["卡牌 / 打牌"]}, {"id": "234889572", "lang": "schinese", "up": true, "ts": 1789013061, "pt": 111, "vu": 2, "txt": "重制新绝代双骄3 求求了 求求了 求求了", "th": []}, {"id": "234889529", "lang": "schinese", "up": true, "ts": 1789012988, "pt": 333, "vu": 0, "txt": "本来想打差评的还是算了，价格合适，比三国群英传8至少好得多毕竟底子还在，有原版可玩不错。卡牌系统和选择难度有点鸡肋，纯战棋游戏就该硬核强迫玩家难度要有。画面一股手游味，这毕竟是电脑或主机游戏，廉价感甚至比一些手游还差，画风比原版差远了，各种纸片图一动一动的看着也增加了辣眼度，要是画面做成3D模型更好。不管抄不抄袭UI你至少要看着按键明了呀，装备图标是非常非常不协调的难看，还不让玩家方便操作，非常辣眼睛，可以用手柄是不错，不过提示因该更多。买卖装备不知道是不是有BUG按下确定经常就直接翻到仓库了，退出商店重进又好了。系统因该改进地形站位加减能力机制，不过对于你们目前不适合做游戏的团队有点艰难。\n新作就别出了，你们是真不适合做游戏，游戏最重要的还是玩法和数据的精致度（这可以参考一些日系RPG），下次重制一下三国群英传7吧，顺便修改一下平衡，可以2D动漫风，但画面别再这样看着像纸片了。", "th": ["數值 / 平衡", "UI / 介面", "畫面 / 美術", "卡牌 / 打牌", "BUG / 當機", "發售日 / 價格"]}, {"id": "234889136", "lang": "schinese", "up": true, "ts": 1789012349, "pt": 86, "vu": 0, "txt": "读取快速存档的节点是不是有问题啊，为什么经常有角色被空过回合？而且读档不打断当前语音真的很难蚌，战斗还在打村民已经开始发表胜利感言了", "th": ["配音 / 語音", "BUG / 當機"]}, {"id": "234888725", "lang": "schinese", "up": true, "ts": 1789011718, "pt": 172, "vu": 0, "txt": "童年回忆，期待把2也重制了！", "th": ["情懷 / 補票"]}, {"id": "234888303", "lang": "schinese", "up": true, "ts": 1789011052, "pt": 131, "vu": 0, "txt": "为情怀补票，诚意满满的重置，魂穿最美好的学生游戏时光，把自己的作品排队复刻吧，幻三，超时空英雄传说，绝代双骄。。。", "th": ["情懷 / 補票", "續作 / 二代"]}, {"id": "234888207", "lang": "schinese", "up": true, "ts": 1789010905, "pt": 69, "vu": 0, "txt": "童年的回忆啊，玩过原版的都是老登了吧（笑）。浅玩了一下还不错，能让我继续玩下去。希望吧幻世录2重置提上日程。", "th": ["情懷 / 補票", "續作 / 二代"]}, {"id": "234888124", "lang": "schinese", "up": true, "ts": 1789010774, "pt": 240, "vu": 0, "txt": "水龙波没有龙，我去，实在忍不了", "th": []}, {"id": "234887934", "lang": "schinese", "up": true, "ts": 1789010461, "pt": 55, "vu": 0, "txt": "经典游戏的重制！！！\n在原作的基础上进行了现代改进，即保留了原来的感觉又有一定的革新。\n总之是一次很好的重制，期待未来有更多的经典游戏能够以高质量重制！！！", "th": []}, {"id": "234887903", "lang": "schinese", "up": true, "ts": 1789010423, "pt": 190, "vu": 0, "txt": "非常喜欢。", "th": []}, {"id": "234886744", "lang": "tchinese", "up": true, "ts": 1789008716, "pt": 241, "vu": 0, "txt": "可以 good", "th": []}, {"id": "234886128", "lang": "schinese", "up": true, "ts": 1789007823, "pt": 90, "vu": 0, "txt": "为了雷总必须入,希望能有个好结局,游戏做得比预想的好,很好玩", "th": ["多結局 / IF 劇情"]}, {"id": "234885442", "lang": "schinese", "up": false, "ts": 1789006841, "pt": 74, "vu": 0, "txt": "铁壁之舞成就完成不了，请尽快修复", "th": []}, {"id": "234885421", "lang": "schinese", "up": true, "ts": 1789006814, "pt": 73, "vu": 2, "txt": "什么时候重制超时空英雄传说？什么时候重制超时空英雄传说？\n强烈要求重制超时空英雄传说", "th": ["續作 / 二代"]}, {"id": "234885083", "lang": "schinese", "up": true, "ts": 1789006367, "pt": 34, "vu": 1, "txt": "刚到废都就不能触发剧情，赶紧修复\n", "th": []}, {"id": "234885080", "lang": "schinese", "up": true, "ts": 1789006361, "pt": 14, "vu": 0, "txt": "补票，童年最美好的回忆，虽然画面AI感很重，在现在各种精美画面的大制作面前有点拿不出手，但确实治好了电子ED，真的是好久没这么投入的玩游戏了。", "th": ["畫面 / 美術", "情懷 / 補票"]}, {"id": "234885053", "lang": "schinese", "up": true, "ts": 1789006311, "pt": 247, "vu": 0, "txt": "终于玩上了，毕竟小成本作品，制作组有没有10个人都不好说。不过价格也算接地气。怀旧党有福了，1998年的作品还能重制已经非常不容易了，童年白月光。", "th": ["情懷 / 補票", "發售日 / 價格"]}, {"id": "234884873", "lang": "schinese", "up": true, "ts": 1789006021, "pt": 42, "vu": 1, "txt": "老秘籍还能用，实测", "th": []}, {"id": "234884858", "lang": "schinese", "up": true, "ts": 1789006005, "pt": 89, "vu": 0, "txt": "原汁原味的基础上增加了不少现代化设定，点赞，不过敌人增援等级设定有待商榷，让练级几乎成了副作用啊。", "th": []}, {"id": "234884734", "lang": "schinese", "up": true, "ts": 1789005837, "pt": 44, "vu": 0, "txt": "不错不错，还原了原版那个味儿，而且有创新和新玩法的加入，很好很好", "th": []}, {"id": "234884659", "lang": "schinese", "up": true, "ts": 1789005751, "pt": 20, "vu": 0, "txt": "小学时新华书店69买的第一款游戏，现在81买重置还送原版，真不错啊。当时整个暑假一直玩这个游戏，BGM一定要选经典版，还是内个味儿，爷青回！", "th": ["BGM / 音樂"]}, {"id": "234884210", "lang": "schinese", "up": true, "ts": 1789005123, "pt": 90, "vu": 0, "txt": "每局游戏有没有回合数最大限制呀？第三关我缇娜110回合都刷到7级了，这在原版是不可能的，如果没有回合数那我可以直接把一转之前的缇娜刷到满呀", "th": []}, {"id": "234883386", "lang": "schinese", "up": true, "ts": 1789003918, "pt": 210, "vu": 1, "txt": "这算是爷青回了吧 支持一下", "th": []}, {"id": "234883032", "lang": "schinese", "up": true, "ts": 1789003366, "pt": 6, "vu": 0, "txt": "虽然看出来是小成本重制，通过玩试玩版也比较符合预期（本身预期也不高），希望国产游戏不管是重制还是经典复刻能越来越好，越来越多样百花齐放。", "th": []}, {"id": "234882519", "lang": "schinese", "up": true, "ts": 1789002670, "pt": 8, "vu": 2, "txt": "这就是我少年时期的白月光。就算今天端上来一盘屎，我也会微笑着说好吃", "th": []}, {"id": "234882038", "lang": "schinese", "up": true, "ts": 1789002013, "pt": 114, "vu": 0, "txt": "有种把老游戏都重制 你出一个我买一个", "th": []}, {"id": "234881714", "lang": "tchinese", "up": true, "ts": 1789001581, "pt": 93, "vu": 5, "txt": "很不錯，完成品比想像中好。\n有台配有工作坊，價錢又合理，\n覺得很有誠意就買了。\n印象中還有一款\"阿瑪迪斯戰記\"好像是漢堂的，\n希望他們也來重製或出新作。", "th": []}, {"id": "234881445", "lang": "schinese", "up": true, "ts": 1789001214, "pt": 18, "vu": 0, "txt": "啥也不说了，收入原版还简繁都有，就值得一个好评了，这种重制版游戏多来几个", "th": []}, {"id": "234881209", "lang": "schinese", "up": true, "ts": 1789000890, "pt": 7, "vu": 1, "txt": "看到这么多说贵的评价，也算是有点明白官方为什么不舍得花钱弄好点的美术了。隔壁今天一起开卖的东方红魔乡重制版卖97块可是好评如潮，人家也是主打怀旧童年的，才800多m大小没啥修改呢，而幻世录这边除了画面，其他修改明显更用心一点。怎么说，你的童年比人家玩东方的童年更轻贱一些吗？", "th": ["畫面 / 美術", "情懷 / 補票"]}, {"id": "234880780", "lang": "schinese", "up": true, "ts": 1789000308, "pt": 228, "vu": 0, "txt": "很经典", "th": []}, {"id": "234878764", "lang": "tchinese", "up": true, "ts": 1788997469, "pt": 100, "vu": 0, "txt": "除了畫面各項表現還不錯.", "th": ["畫面 / 美術"]}, {"id": "234877481", "lang": "schinese", "up": true, "ts": 1788995820, "pt": 121, "vu": 1, "txt": "圆梦\n\n不过现在闪退了，更改画面分辨率，或者窗口化都会闪退", "th": ["畫面 / 美術", "BUG / 當機"]}, {"id": "234877441", "lang": "schinese", "up": true, "ts": 1788995746, "pt": 400, "vu": 0, "txt": "挺好玩的！", "th": []}, {"id": "234877422", "lang": "schinese", "up": true, "ts": 1788995728, "pt": 131, "vu": 3, "txt": "很少首发入手游戏，算是补票了，希望能出幻世录2重制，也奢望能出3", "th": ["情懷 / 補票", "續作 / 二代"]}, {"id": "234874704", "lang": "schinese", "up": false, "ts": 1788992497, "pt": 390, "vu": 4, "txt": "快30年了，利魯瑪山地依然是本游戏最恶意，最劝退，最恶心，最让人想删游戏的地图。\n——\n打过利魯瑪山地后个人认为这是个半成品游戏，不推荐。\n打完大波敌人后，剩下地图最右侧4个翼人弓箭手永远待机，必须操纵雷特过去它们才会移动，这就导致了最后将近20回合队伍其余人一直待机看着雷特表演，雷特一个人或者单挑，或者飞过去慢慢把4个弓箭手引过来，极端枯燥乏味，中间都快睡着了。\n无法想象这么无聊乏味劝退的设定是吃了多少斤不可描述之物才想出来的。", "th": []}, {"id": "234873970", "lang": "schinese", "up": true, "ts": 1788991577, "pt": 309, "vu": 0, "txt": "童年的经典回忆，抛开为情怀买单，也还是因为这个游戏值得买。", "th": ["情懷 / 補票", "購買意願"]}, {"id": "234873221", "lang": "schinese", "up": true, "ts": 1788990699, "pt": 105, "vu": 3, "txt": "之前只知道重制没太关注更新的新闻，没想到这次重制版80块还直接带原版确实意外，而且提供了mod工具将来能拓展可玩性，重制版音乐和原版能随意切换很贴心，好评\n缺点么就是ai立绘真的难看，跟原版都不是一个次元的，花那钱还不如给钱找个美术生按原版重新手画几张，然后就是有点小瑕疵可以优化下，一个是手柄不支持游戏里改确定取消按键，还有个就是原版明明没调动多少cpu资源，最多2个百分比，但是风扇直接1500多呼呼转，应该也可以优化下吧，重制版没有这种情况", "th": ["AI 素材 / AI 味", "BGM / 音樂", "畫面 / 美術"]}, {"id": "234871209", "lang": "schinese", "up": false, "ts": 1788988485, "pt": 192, "vu": 1, "txt": "第三关成就的铁壁之舞怎么都不能完成，就这么几关就来BUG，失望", "th": ["BUG / 當機"]}, {"id": "234871082", "lang": "schinese", "up": true, "ts": 1788988345, "pt": 289, "vu": 2, "txt": "为儿时补个票吧 初中的时候玩的藏经阁盗版", "th": []}, {"id": "234870964", "lang": "schinese", "up": true, "ts": 1788988214, "pt": 232, "vu": 3, "txt": "还行。如果不算童年滤镜，其实体验是强过原版的。", "th": ["情懷 / 補票"]}, {"id": "234870622", "lang": "schinese", "up": true, "ts": 1788987870, "pt": 110, "vu": 1, "txt": "1.8小时玩到12关没有卡死闪退过，试玩版的一些如多段攻击的音效、敌回合不能回溯读档的问题也有修改，价格也算合理范围，好评（评价里有个1.2小时说通关卡死界面的什么成分？）", "th": ["數值 / 平衡", "UI / 介面", "BGM / 音樂", "BUG / 當機", "發售日 / 價格"]}, {"id": "234869776", "lang": "schinese", "up": true, "ts": 1788986993, "pt": 162, "vu": 1, "txt": "没玩过这游戏是没有情怀的，就算不是重置那也是经典或者神作。小时候没钱只能玩破解版现在有钱了必须为情怀冲一次，好怀念以前和同学兄弟们挤在电脑旁那激动的心情", "th": ["情懷 / 補票"]}, {"id": "234869364", "lang": "schinese", "up": false, "ts": 1788986543, "pt": 143, "vu": 0, "txt": "卡死那是家常便饭，法兰克哪来的必杀，怒气不掉，无限放必杀。", "th": []}, {"id": "234869273", "lang": "schinese", "up": true, "ts": 1788986452, "pt": 197, "vu": 9, "txt": "0点开玩  玩到天亮，快到那可那鲁了，感觉还不错，就是遇到了2个问题我想反馈一下。\n1.商店买武器防具穿戴这种操作不如老版本的便捷，尤其是穿戴饰品的时候还要选择1号位2号位，老版本是直接拖装备到对应位置就替换上了。\n2.汉克斯的神技金之手，偷取道具成功率有点太低了，感觉有20%到25%，没偷到我就S/L大法，重复4次左右才能偷到，这有点影响体验了，主要是废都曼多利亚那关 挑战任务需要尝试偷取逆十字（偷取失败了也能完成任务）。\n等后续玩了再来补充", "th": []}, {"id": "234867435", "lang": "schinese", "up": true, "ts": 1788984573, "pt": 57, "vu": 2, "txt": "虽然AI味道比较重，，但也算是童年的回忆。而且游戏进行了现代化翻新", "th": ["AI 素材 / AI 味", "情懷 / 補票"]}, {"id": "234863469", "lang": "schinese", "up": true, "ts": 1788982560, "pt": 180, "vu": 1, "txt": "好玩，无条件好评。早点把二代重制了，再制作下第三代", "th": ["續作 / 二代"]}, {"id": "234861032", "lang": "schinese", "up": true, "ts": 1788980216, "pt": 66, "vu": 1, "txt": "为了情怀必须买单", "th": ["情懷 / 補票", "購買意願"]}, {"id": "234860558", "lang": "schinese", "up": false, "ts": 1788979767, "pt": 50, "vu": 1, "txt": "赶紧修复 使用伤害魔法就闪退的BUG 这严重影响游戏了  试玩版 没有伤害魔法 就没有测试出来这个严重BUG", "th": ["BUG / 當機"]}, {"id": "234859398", "lang": "schinese", "up": true, "ts": 1788978681, "pt": 120, "vu": 3, "txt": "为什么有些人连81块都觉得不值呢，哪怕不算重制版，一起打包的原版就值得81。说来哪怕重制的再差，依原版的底子再玩重制版还是好玩的。老式rpg味道浓厚，刚刚第三关蹲坑蹲了94回合，就玩的很舒服。\n好评支持了，希望把老国产都移植或者打包重制，出一部买一部", "th": []}, {"id": "234859253", "lang": "schinese", "up": false, "ts": 1788978547, "pt": 14, "vu": 0, "txt": "14分钟，连续闪退2次，属实厉害", "th": ["BUG / 當機"]}, {"id": "234858816", "lang": "schinese", "up": false, "ts": 1788978138, "pt": 69, "vu": 3, "txt": "我严重怀疑游戏制作者没玩过游戏啊，为什么游戏通关了一直卡界面啊，我真服了，能不能把游戏做完在拿出来卖？这游戏给我的感觉就是路边一条无人在意？内部居然连个测试的都没有，我的天啊！我只能说一周之内不把bug全部修好直接退款。", "th": ["UI / 介面", "BUG / 當機", "退款風險"]}, {"id": "234858739", "lang": "schinese", "up": true, "ts": 1788978034, "pt": 124, "vu": 1, "txt": "情怀吧，情怀阿，情怀，哎~", "th": ["情懷 / 補票"]}, {"id": "234858548", "lang": "tchinese", "up": true, "ts": 1788977865, "pt": 61, "vu": 3, "txt": "事實證明，捱夜係值得嘅，9號晚都未有消息，等到12點後一睇，卒之上架啦 ^_^\nAs my saying goes, where there is a night owl, there is a Purchasing Opportunity for \"The Legend of Fancy Realm\" Still no news on the evening of the 9th, but after waiting past midnight — it finally went live! ^_^\n\n作為侏羅紀時期就開始鍾意《幻世錄》嘅001號fans，梗係要支持一下奧汀啦！\nAs the No. 001 fan who is a die-hard fan since the Jurassic period, of course I have to support Odin (Userjoy)!\n\n奧汀閣下，乜嘢《幻世錄》2代、《超時空英雄傳說》、《幻想紀元》、《異域狂想曲》、《墮落天使》……一齊上啦，你肯上我就肯買。\nOdin (Userjoy) Sama, please relaunch \"The Legend of Fancy Realm 2\", \"Super series\", \"Fancy Centur\", \"‌The Fool Plate\", \"The Fallen Angel\"... Come on, your promise, my purchasing without hesitation.\n\n順求官方 [h1]粵語配音及主題曲 [/h1]，感謝！\nRequesting official  [h1]Cantonese Dubbing and a Cantonese Theme Song[/h1], thank you very much!\n\n運行遊戲後，可以揀「經典版/繁中」、「經典版/簡中」或「重製版」。\nAfter launching the game, you can choose between \"Classic Edition / Traditional Chinese\", \"Classic Edition / Simplified Chinese\" or \"Remake Edition\".\n\n「經典版」版本號係1.06，「簡中」冇寰宇之星提示，仲係經典「磨擊力」:D。\nThe version of \"Classic Edition\" is 1.06, with no \"Unistar\" prompt in the \"Simplified Chinese\" version. \"Maggie Power\", the classic mistranslation as usual :D.\n\n可以按 Alt+Enter 切換全屏或窗口，遊戲識自動保存全屏設定。\nYou can toggle between fullscreen and windowed mode by pressing Alt+Enter, and the game will automatically save the fullscreen settings.\n\n再來睇重製版\nLet's take another look at the Remake.\n\n比試玩版改進咗好多，譬如唔會扣少少血就換成嘔血想死咁款。\nThe demo version has been improved a lot, such as losing a little HP no longer triggers the vomiting blood like dying\n\n「音樂」吸取咗玩家意見，可以按個人喜好揀「經典版」或「重製版」。\nThe \"Music\" feature incorporates player feedback, allowing users to choose between the \"Classic Edition\" or the \"Remake Edition\" based on personal preferences.\n\n一揀「經典版音樂」，感覺返晒來啦！\nSelect the \"Classic Edition Music\" and feel like you're back in the old days!\n\n「回憶錄」菜單可以睇CG、對白同動畫。\nThe \"Memories\" menu allows you to watch CG, Dialogue, and Movies.\n\n「創意工坊」超級強大，奧汀超級大方，抵讚！\nWorkshop is super powerful, and Odin (Userjoy) is incredibly generous — well done!\n\n可以導出遊戲文本及配音劇本，\nYou can export Localization texts and Voice recording lists.\n\n可以修改圖片、音樂、配音、文本、字體、裝備（含數值）\nYou can modify Appearance, Music & SFX, Voice, Localization, Fonts, and Equipment (including stats).\n\n欲知詳情如何，且聽下回分解……\nFor more details, stay tuned for the next installment...", "th": ["配音 / 語音", "數值 / 平衡", "BGM / 音樂", "情懷 / 補票", "續作 / 二代", "本地化 / 字型顯示"]}, {"id": "234858302", "lang": "schinese", "up": false, "ts": 1788977626, "pt": 92, "vu": 3, "txt": "首先我只为情怀补个票，但是这个价格我真的是。。。。你也敢？？？？？\n这画风这感觉完全和老版不是一回事，能玩但是很难受，游戏我不退就当补票了，但是差评我给", "th": ["畫面 / 美術", "情懷 / 補票", "發售日 / 價格"]}, {"id": "234857661", "lang": "schinese", "up": true, "ts": 1788977026, "pt": 252, "vu": 0, "txt": "美术风格略手游，但只要琥的转职头像别像原版那么抽象就保持好评\n台配国语亲切，千禧年前后电视上全是这个味\n噩梦难度比原版开局简单，奖励目标比较折腾人\n----------------------------------------------------------------\n我错了，一周目噩梦难度不是人玩的，动态等级太吓人，仅仅是开局简单\n巢窟见汉克斯都难，俩山贼冲上来各抡一斧头雷就剩血皮了", "th": ["數值 / 平衡", "畫面 / 美術"]}, {"id": "234857637", "lang": "schinese", "up": true, "ts": 1788977012, "pt": 58, "vu": 209, "txt": "唉。。。怎么说呢，一言难尽。。我Steam虽然买了很多游戏，也玩的很多，我甚至干了游戏行业快10年，平时缺不怎么发表评论，这次破天荒想多说几句。。\n\n当年幻视录我玩时候，还是很多很多年前上小学，一开始用光盘，但是不会安装，就每次都是光盘启动，那个HSL的图标，但是由于是光盘启动的，所以每次都没法存档，那个年纪的我又不理解，于是每次只能玩前两关，玩一会吃饭就关了，再开又是前两关，就这么打了好久，但是真的乐此不彼。\n\n直到后来，会安装和存档了，就一点点打通，看着游戏杂志里，一点点看攻略，加-pos，找隐藏宝物坐标，很喜欢各种反派，傲、席德尔，那时候觉得这些名字酷酷的。说老实话，幻视录和三国英杰传真的是我SLG的启蒙导师，我错过了超时空英雄传说，但是这两个游戏我是真的爱，不是喜欢，是爱。以至于幻视录2我玩的都没啥感觉，觉得差点意思。\n\n今天本来想睡了，看到邮件里说重制版上线，立刻打开电脑，购买，进游戏。。但是这个美术，看着怪怪的，知道看到AI提示，才意识到这个游戏现在画风是真的一眼AI，音乐也不对劲，于是打开经典版音乐选项，瞬间舒服了，回到那个将近30年前的小时候，回到自己最爱的游戏世界。\n\n我不知道有多少人记得宇俊奥汀这个公司，他出了很多游戏，里面都有个神秘男子，会卖很多厉害的东西，但是过时不候。他们还在很多年前出了一款游戏叫做堕落天使，我得印象非常深，现在还有光盘，是真的很好玩很好玩，很早的回合制。也希望能出个这个重置版就好了。\n\n碎碎念念了这么多，可能根本没人看得懂，也没有人玩过这些快30年的游戏了，真是大叔的碎碎念了。。我看着第一个差评，说现在做了一款连页游质量都不如的游戏，我说实话心里很复杂，我清楚的知道，买这个游戏，纯粹是为了童年买单，我也知道那几个好评，可能刚买了游戏5分钟，就和我一样，为了情怀先打了好评再说，但是游戏品质真的，一言难尽，如果没玩过1的人，尤其是没在我们这个年纪，被幻视录、三国英杰传、KKND、超时空英雄传说、三国志4，大富翁，这些游戏在童年抱过的人，我不建议你们买。你们可以去买鬼武者，或者影之灵刃，或者33远征队，都非常好玩也好看。\n\n但是，如果是和我一样经历过那个年代的，宇峻奥汀，哦现在你叫USERJOY。。我就告诉你一句话，就你这些快30年的游戏重置版，哪怕用了一万个AI的美术，哪怕改的面目全非，哪怕偷工减料过来圈我钱。就冲你当年，让一个10岁的孩子，一整个暑假，每天用光盘启动，开开心心的打开HSL的图标，笑着期待着看着雷欧纳德，无数次。\n\n就冲这个，你的游戏再垃圾，你出一个，老子就无脑入一个，你信吗？？", "th": ["BGM / 音樂", "畫面 / 美術", "情懷 / 補票", "續作 / 二代", "BUG / 當機", "發售日 / 價格", "購買意願"]}, {"id": "234857579", "lang": "tchinese", "up": true, "ts": 1788976958, "pt": 9, "vu": 3, "txt": "先給好評了，很用心的可以做出隨時可以切換經典版的音樂，舊版音樂滿滿的回憶，搭配上重製版的畫面!!\n看的出來很用心聆聽玩家要求，加油!!", "th": ["BGM / 音樂", "畫面 / 美術", "情懷 / 補票"]}, {"id": "234856469", "lang": "schinese", "up": true, "ts": 1788975894, "pt": 6, "vu": 1, "txt": "首发才81块，还附带简体中文和繁体中文两个版本，不说给情怀补票，就说这价格给2个游戏，还要啥自行车？这可是当年战棋游戏类的超经典作品，当年的国产之光，也是我买的第一款正版游戏（当年68块还是98块买的，那时候家里连电脑都没有，去新华书店买书时看到这个游戏就买下了，因为买游戏的时候暂时还没电脑，只能放VCD机子里面听听BGM，直到2年后小升初家里给买了电脑才玩上，印象深刻），无脑入且必须好评！", "th": ["BGM / 音樂", "情懷 / 補票", "本地化 / 字型顯示", "發售日 / 價格"]}, {"id": "234854758", "lang": "schinese", "up": true, "ts": 1788974318, "pt": 38, "vu": 1, "txt": "还不错，补票童年", "th": ["情懷 / 補票"]}, {"id": "234854048", "lang": "schinese", "up": false, "ts": 1788973643, "pt": 42, "vu": 4, "txt": "都浪费原画师的画了，2026年了，做的还不如一个网页游戏有质量，太说不过去了。", "th": []}, {"id": "234853667", "lang": "schinese", "up": true, "ts": 1788973285, "pt": 27, "vu": 16, "txt": "虽然说感觉有点怪怪的 但是还是很有诚意的 期待做幻世录2 及 超时空英雄传说的重置版 或者幻世录3 也行", "th": ["續作 / 二代"]}, {"id": "234853533", "lang": "schinese", "up": false, "ts": 1788973162, "pt": 25, "vu": 6, "txt": "你也配这价格？", "th": ["發售日 / 價格"]}, {"id": "234852876", "lang": "schinese", "up": true, "ts": 1788972558, "pt": 34, "vu": 1, "txt": "实话实说  定价不便宜  而且还没玩不好评  ，但是为了幻世录2的重置版也能上+情怀买单果断冲了！有良心就快上幻2重置版啊喂！", "th": ["情懷 / 補票", "續作 / 二代", "發售日 / 價格", "購買意願"]}, {"id": "234852691", "lang": "tchinese", "up": true, "ts": 1788972373, "pt": 12, "vu": 6, "txt": "经典战旗游戏，百玩不厌。总算为童年回忆补上一票了……\n希望接下来还有二代，三代新制作推出，UJ继续加油吧。", "th": ["情懷 / 補票", "續作 / 二代"]}, {"id": "234852570", "lang": "schinese", "up": true, "ts": 1788972271, "pt": 27, "vu": 58, "txt": "致那个28年前的暑假，在电脑前被虐到崩溃的少年，第一次玩幻世录时才11岁，现在已经39了，回不去了...", "th": []}, {"id": "234851477", "lang": "schinese", "up": true, "ts": 1788971295, "pt": 24, "vu": 0, "txt": "第二关 打到最后 会卡死 只有我这样吗？", "th": []}, {"id": "234851471", "lang": "tchinese", "up": true, "ts": 1788971287, "pt": 24, "vu": 1, "txt": "补票补票", "th": ["情懷 / 補票"]}];
+const LANGL = {"tchinese": "繁中", "schinese": "簡中", "english": "英文", "japanese": "日文", "koreana": "韓文", "thai": "泰文", "russian": "俄文", "spanish": "西文", "german": "德文", "french": "法文", "portuguese": "葡文", "polish": "波蘭文"};
+const $ = s => document.querySelector(s);
+function fmt(ts){const d=new Date(ts*1000);return d.toLocaleString('zh-TW',{timeZone:'Asia/Taipei',
+  year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function render(){
+  const lang=$('#f-lang').value, up=$('#f-up').value, th=$('#f-th').value,
+        q=$('#f-q').value.trim().toLowerCase(), sort=$('#f-sort').value;
+  let rows=DATA.filter(r=>(!lang||r.lang===lang)&&(up===''||String(r.up?1:0)===up)
+        &&(!th||r.th.includes(th))&&(!q||r.txt.toLowerCase().includes(q)));
+  rows.sort(sort==='vote'?(a,b)=>b.vu-a.vu||b.ts-a.ts
+          :sort==='long'?(a,b)=>b.txt.length-a.txt.length:(a,b)=>b.ts-a.ts);
+  $('#count').textContent = rows.length+' 筆（共 '+DATA.length+' 筆樣本）';
+  $('#list').innerHTML = rows.slice(0,400).map(r=>`<div class="rev"><div class="meta">
+     <span class="pill ${r.up?'up':'dn'}">${r.up?'👍 好評':'👎 負評'}</span>
+     <span>${LANGL[r.lang]||r.lang}</span><span>${fmt(r.ts)}</span>
+     <span>遊玩 ${Math.round(r.pt/60*10)/10} 小時</span>
+     ${r.vu?`<span>有用 ${r.vu}</span>`:''}
+     ${r.th.map(t=>`<span class="tg">${t}</span>`).join('')}
+   </div><p>${r.txt.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'})[c])}</p></div>`).join('');
+}
+['#f-lang','#f-up','#f-th','#f-q','#f-sort'].forEach(s=>{
+  document.querySelector(s).addEventListener('input',render);});
+render();
+</script>
