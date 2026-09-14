@@ -133,7 +133,7 @@ mark{background:rgba(192,57,47,.18);color:inherit;padding:0 2px;border-radius:2p
 
 <div class="foot">
   「故障回報」＝內文命中閃退／卡死／啟動失敗／存檔／成就／退款／道具遺失／顯示操作異常等<b>故障類</b>關鍵詞的評論（配音、畫面、價格這類意見不算故障，只當標籤顯示），<b>包含給好評但有回報問題的</b> —
-  那些人現在還願意推薦，但問題不修就會改。討論版問題串為人工確認過內文的串。
+  那些人現在還願意推薦，但問題不修就會改。討論版：標「首次發現」的是自動抓回來的（日期為系統第一次看到它的時間，不一定是發文日）；沒標的是人工讀過內文的重點串。
 </div>
 </div>
 
@@ -201,7 +201,7 @@ function build(){
   }
   for(const t of (DATA.threads||[])){
     items.push({kind:"thr", day:t.d, ts:null, title:t.t, author:t.a, replies:t.r,
-      cats:[t.cat], txt:t.x, url:t.u, lang:""});
+      cats:[t.cat || "討論串"], txt:t.x || "", url:t.u, lang:"", auto: !!t.auto});
   }
   return items;
 }
@@ -257,6 +257,7 @@ function render(){
     const cards = list.map(i => {
       if(i.kind === "thr") return `<div class="card thr">
         <div class="meta"><span class="pill p-thr">討論串</span>
+          ${i.auto ? '<span class="tmeta">首次發現</span>' : ""}
           <span>${esc(i.author)}</span><span>${i.replies} 回覆</span>
           ${i.cats.map(c=>`<span class="tag">${esc(c)}</span>`).join("")}
           <a href="${i.url}" target="_blank" rel="noopener">開啟</a></div>
@@ -339,6 +340,17 @@ render();
 
 // 自動載入同目錄的 reviews_*.json（放在網站上時，開網址就是最新資料）
 (async () => {
+  // 討論串（自動抓來的，日期用「首次發現」）
+  try {
+    const tr = await fetch("threads_4030150.json", {cache: "no-store"});
+    if (tr.ok) {
+      const auto = await tr.json();
+      const have = new Set((DATA.threads || []).map(t => t.u));
+      DATA.threads = (DATA.threads || []).concat(
+        auto.filter(t => !have.has(t.u)).map(t => Object.assign({auto: true}, t)));
+    }
+  } catch (e) { /* 沒有這個檔就只用內建的 */ }
+  // 評論
   for (const p of ["reviews_4030150.json", "data/reviews_4030150.json"]) {
     try {
       const res = await fetch(p, {cache: "no-store"});
@@ -348,5 +360,6 @@ render();
       return;
     } catch (e) { /* file:// 或檔案不存在就略過，改用內建資料 */ }
   }
+  ITEMS.length = 0; build().forEach(i => ITEMS.push(i)); render();
 })();
 </script>
