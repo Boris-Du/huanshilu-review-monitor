@@ -853,6 +853,22 @@ def cmd_export(args, con):
     print(f"已匯出 {n} 筆到 {out}　← 把這個檔案丟回 Claude 對話裡即可")
 
 
+def cmd_export_threads(args, con):
+    """把討論串匯出成 JSON（給問題回報日報頁使用）。日期用 first_seen（首次發現）。"""
+    out = args.file or f"threads_{args.appid}.json"
+    rows = []
+    for r in con.execute(
+            "SELECT * FROM threads ORDER BY first_seen DESC, replies DESC"):
+        rows.append({
+            "id": r["id"],
+            "d": datetime.fromtimestamp(r["first_seen"], TW).strftime("%Y-%m-%d"),
+            "t": r["title"], "a": r["author"] or "", "r": r["replies"] or 0,
+            "u": r["url"], "cat": "討論串", "x": "",
+        })
+    json.dump(rows, open(out, "w", encoding="utf-8"), ensure_ascii=False)
+    print(f"已匯出 {len(rows)} 個討論串到 {out}")
+
+
 def cmd_snapshot(args, con):
     """手動寫入官方摘要（沒有網路時，可用 Claude 抓到的數字補）。格式：lang,total,pos,neg,desc"""
     now = int(time.time())
@@ -866,7 +882,7 @@ def cmd_snapshot(args, con):
 
 def main():
     p = argparse.ArgumentParser(description="Steam 評論/討論版監控")
-    p.add_argument("cmd", choices=["init", "fetch", "report", "run", "seed", "snapshot", "export"])
+    p.add_argument("cmd", choices=["init", "fetch", "report", "run", "seed", "snapshot", "export", "export-threads"])
     p.add_argument("file", nargs="?", help="seed 讀取／export 輸出的 JSONL 檔")
     p.add_argument("--appid", type=int, default=4030150)
     p.add_argument("--values", nargs="*", default=[], help="snapshot: lang,total,pos,neg,desc")
@@ -902,6 +918,8 @@ def main():
         cmd_snapshot(args, con)
     elif args.cmd == "export":
         cmd_export(args, con)
+    elif args.cmd == "export-threads":
+        cmd_export_threads(args, con)
 
 
 if __name__ == "__main__":
