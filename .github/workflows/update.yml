@@ -27,11 +27,14 @@ jobs:
           if [ -f data/reviews_4030150.jsonl ]; then
             python steam_watch.py seed data/reviews_4030150.jsonl --appid 4030150 --db steam_watch.db
           fi
-          python steam_watch.py fetch --full --db steam_watch.db
+          if [ -f data/threads_4030150.jsonl ]; then
+            python steam_watch.py seed-threads data/threads_4030150.jsonl --appid 4030150 --db steam_watch.db
+          fi
+          python steam_watch.py fetch --full --db steam_watch.db --out docs
           python steam_watch.py report --db steam_watch.db --out docs --days 30 --excerpts 8
           python steam_watch.py export data/reviews_4030150.jsonl --appid 4030150 --db steam_watch.db
           python -c "import json;rows=[json.loads(l) for l in open('data/reviews_4030150.jsonl',encoding='utf-8')];json.dump(rows,open('docs/reviews_4030150.json','w',encoding='utf-8'),ensure_ascii=False)"
-          python steam_watch.py export-threads docs/threads_4030150.json --appid 4030150 --db steam_watch.db
+          python steam_watch.py export-threads docs/threads_4030150.json --appid 4030150 --state data/threads_4030150.jsonl --db steam_watch.db
           cp docs/dashboard_4030150.html docs/full.html
 
       - name: Commit if changed
