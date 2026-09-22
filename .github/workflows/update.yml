@@ -2,7 +2,7 @@ name: Update Steam review dashboard
 
 on:
   schedule:
-    - cron: "0 2 * * *"
+     - cron: "40 0 * * *"
   workflow_dispatch:
 
 permissions:
